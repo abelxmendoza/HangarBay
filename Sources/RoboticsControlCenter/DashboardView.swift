@@ -34,7 +34,7 @@ struct DashboardView: View {
             Text("Fleet Overview")
                 .font(.largeTitle.bold())
                 .foregroundStyle(HB.frost)
-            Text("Every robot you own, ready to fly. · \(runtime.hostSummary)")
+            Text("BUILD • EXPLORE • DEPLOY · \(runtime.hostSummary)")
                 .foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 if runtimeRunning {

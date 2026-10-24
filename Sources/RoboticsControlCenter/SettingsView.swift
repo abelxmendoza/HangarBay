@@ -15,8 +15,8 @@ struct SettingsView: View {
                 Button("Re-check everything") { runtime.refresh() }
             }
             Section("About") {
-                LabeledContent("App", value: "Hangar Bay")
-                LabeledContent("Version", value: "0.2 — DARKSTAR foundation")
+                LabeledContent("App", value: "Darkstar Robotics")
+                LabeledContent("Version", value: "0.3 — Darkstar Robotics rebrand")
                 Text("One friendly place on your Mac for robotics development: pick a validated environment, pass preflight, fly in simulation, verify the evidence, then go to real hardware. The Linux runtime underneath is managed for you.")
                     .font(.callout).foregroundStyle(.secondary)
             }

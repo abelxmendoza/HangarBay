@@ -106,7 +106,7 @@ struct PreflightView: View {
         switch status {
         case .pass: return HB.telemetry
         case .warn: return HB.warning
-        case .fail: return HB.signal
+        case .fail: return HB.alert
         case .unknown: return HB.steel
         }
     }

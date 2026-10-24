@@ -1,18 +1,22 @@
 import SwiftUI
 
-/// DARKSTAR design tokens — docs/DARKSTAR-UI-UX-PLAN.md.
+/// Darkstar Robotics design tokens (rebrand palette, 2026-10-23).
 /// Industrial cyberpunk × aerospace mission control, macOS-native manners.
-/// Signal red is brand + alert ONLY; telemetry green is verified success ONLY.
+/// Starfire is the brand/primary color ONLY; Alert Red is errors ONLY;
+/// System Green is verified success ONLY; Signal Cyan is instrumentation.
 enum HB {
-    static let obsidian = Color(hex: 0x090D13)
-    static let gunmetal = Color(hex: 0x1C2630)
-    static let panel = Color(hex: 0x11181F)
+    static let obsidian = Color(hex: 0x0A0F14)   // Void Black — main background
+    static let gunmetal = Color(hex: 0x1F2937)   // Gunmetal — cards, elevated surfaces
+    static let panel = Color(hex: 0x111821)      // Deep Slate — panels, navigation
     static let hairline = Color.white.opacity(0.09)
-    static let signal = Color(hex: 0xFF553D)
-    static let telemetry = Color(hex: 0x55D6A0)
-    static let warning = Color(hex: 0xE8B44A)
-    static let frost = Color(hex: 0xE9EEF3)
-    static let steel = Color(hex: 0x8B98A5)
+    static let signal = Color(hex: 0xFF4A2F)    // Starfire — primary actions, brand
+    static let ember = Color(hex: 0xFF785A)      // Ember — hover, illuminated accents
+    static let cyan = Color(hex: 0x00CFFF)       // Signal Cyan — information, instrumentation
+    static let telemetry = Color(hex: 0x28D97A)  // System Green — verified success ONLY
+    static let warning = Color(hex: 0xFFC857)    // Amber — warnings
+    static let alert = Color(hex: 0xF64D4D)     // Alert Red — errors and failures ONLY
+    static let frost = Color(hex: 0xE8EAF0)      // Ice White — primary typography
+    static let steel = Color(hex: 0x8A97A8)      // Steel Gray — secondary typography
 }
 
 extension Color {
@@ -74,7 +78,7 @@ struct EvidenceChip: View {
     }
 }
 
-/// The Hangar Bay mark (user-supplied brand art, bundled as a resource).
+/// The Darkstar Robotics mark (user-supplied brand art, bundled as a resource).
 /// Shown in the sidebar brand block and big on the Dashboard landing.
 struct BrandLogo: View {
     var height: CGFloat = 56
@@ -89,7 +93,7 @@ struct BrandLogo: View {
                 .frame(height: height)
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(HB.hairline, lineWidth: 1))
-                .accessibilityLabel("Hangar Bay logo")
+                .accessibilityLabel("Darkstar Robotics logo")
         }
     }
 }

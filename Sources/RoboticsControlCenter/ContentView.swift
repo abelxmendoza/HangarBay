@@ -32,7 +32,7 @@ struct ContentView: View {
                 Label(section.rawValue, systemImage: section.icon)
                     .tag(section)
             }
-            .navigationTitle("Hangar Bay")
+            .navigationTitle("Darkstar Robotics")
             .safeAreaInset(edge: .top) {
                 brandHeader
             }
@@ -68,11 +68,11 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 4) {
             BrandLogo(height: 54, cornerRadius: 10)
                 .padding(.bottom, 4)
-            Text("HANGAR BAY")
+            Text("DARKSTAR")
                 .font(.system(.title3, design: .default).weight(.heavy))
                 .tracking(2.4)
                 .foregroundStyle(HB.frost)
-            Eyebrow("AUTONOMOUS SYSTEMS CONTROL")
+            Eyebrow("BUILD • EXPLORE • DEPLOY")
             Rectangle()
                 .fill(HB.signal)
                 .frame(width: 44, height: 2)

@@ -1,14 +1,14 @@
-# Hangar Bay
+# Darkstar Robotics
 
 <p align="center">
-  <img src="docs/logo.png" alt="Hangar Bay — robotics for every platform" width="320">
+  <img src="docs/logo.png" alt="Darkstar Robotics — BUILD • EXPLORE • DEPLOY" width="320">
 </p>
 
-*Every robot you own, ready to fly.*
+*BUILD • EXPLORE • DEPLOY*
 
-A native macOS app (Swift + SwiftUI) — a robotics control center that
-gives budding roboticists one friendly place for robotics development on
-their MacBook:
+A native macOS app (Swift + SwiftUI) — a robotics development
+workstation that gives budding roboticists one friendly place for
+robotics development on their MacBook:
 
 - **Dashboard** — live state of the managed Linux runtime (UTM VM), the
   active Ubuntu/ROS/Gazebo pairing, PX4 SITL, and the Tailscale link.
@@ -40,9 +40,17 @@ swift run
 
 Requires macOS 14+. Settings (⌘,) holds the VM name and SSH target.
 The Swift package/target is still named `RoboticsControlCenter`
-internally; the product name is Hangar Bay.
+internally; the product name is Darkstar Robotics (renamed from
+Hangar Bay on 2026-10-23 — the GitHub repo keeps its original name
+for now).
 
 ## Status
+
+v0.3 — Darkstar Robotics rebrand, 2026-10-23. New user-supplied star
+emblem logo; palette retuned to the rebrand system (Starfire #FF4A2F
+primary, Ember #FF785A, Signal Cyan #00CFFF instrumentation, System
+Green #28D97A verified success only, Alert Red #F64D4D errors only).
+Honesty taxonomy unchanged; all runtime behavior preserved.
 
 v0.2 — DARKSTAR design foundation, 2026-10-23 (see
 `docs/DARKSTAR-UI-UX-PLAN.md`). Obsidian/gunmetal theme tokens, branded
