@@ -381,7 +381,7 @@ footer a:hover{color:var(--text)}
       <span class="chip chip-live">v0.4.0 — Released</span>
     </div>
     <h1>Build.<br/>Explore.<br/><span class="red">Deploy.</span></h1>
-    <p class="hero-sub">Darkstar Robotics is a robotics development workstation that lives on your MacBook while the Linux runtime runs managed underneath. <strong>No terminal. No apt locks. No version matrix.</strong> One calm place for ROS, Gazebo, PX4 — and the firmware inside the robot.</p>
+    <p class="hero-sub">Darkstar Robotics is a robotics development workstation that lives on your MacBook while the Linux runtime runs managed underneath. <strong>Less setup friction. Clearer diagnostics. Evidence you can inspect.</strong> One calm place for ROS, Gazebo, PX4 — and the firmware inside the robot.</p>
     <div class="hero-ctas">
       <a class="btn btn-red" href="https://github.com/abelxmendoza/HangarBay/releases/latest/download/DarkstarRobotics-Installer-v0.4.0.zip">Download the Installer</a>
       <a class="btn btn-ghost" href="#demo">▶ Watch the demo</a>
@@ -397,13 +397,37 @@ footer a:hover{color:var(--text)}
   </div>
 </header>
 
+
+<!-- Darkstar mission and research update, 2026-10-24. Original CSS and visual assets preserved. -->
+<section id="why-darkstar" style="background:var(--bg-2);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">Why Darkstar exists</span>
+      <h2>Build robots. Not another broken development environment.</h2>
+      <p>A native Mac experience for Linux-first robotics development. Darkstar aims to help MacBook users get from incompatible dependencies and VM troubleshooting to meaningful robotics experiments—with transparent diagnostics and reproducible results.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card"><h3>Mac-native experience</h3><p>Keep the portable MacBook workflow you enjoy while using Linux tools where the robotics stack requires them.</p></div>
+      <div class="feat-card"><h3>Compatibility before installation</h3><p>Choose documented Ubuntu, ROS 2, Gazebo, and PX4 combinations instead of discovering version mismatches the hard way.</p></div>
+      <div class="feat-card"><h3>Diagnose the environment</h3><p>Expose prerequisite, virtual graphics, and runtime issues with understandable next steps—not silent, irreversible configuration changes.</p></div>
+    </div>
+    <div class="sec-head" style="margin-top:52px">
+      <span class="sec-idx">From the builder</span>
+      <h2>Why I built it.</h2>
+      <p>I love the portability and thoughtful design of MacBooks. But when I started working with ROS 2, PX4, and Gazebo, I spent too much time wrestling with virtual machines, setup instructions, dependency combinations, and graphics problems. At one point a browser inside my Linux VM stopped working until I changed a Wayland-related session setting. I wanted to build the Mac-native gateway to Linux robotics development I wish I'd had when I started.</p>
+      <p style="margin-top:16px">This isn't about replacing Linux or claiming macOS cannot run robotics software. It's about making supported workflows easier to find, configure, troubleshoot, and verify—so students and independent builders can spend more time learning and building.</p>
+      <p style="margin-top:18px"><a class="btn btn-gho" href="https://github.com/abelxmendoza/HangarBay/blob/main/docs/ROBOTICS-SETUP-FRICTION-RESEARCH.md" target="_blank" rel="noopener">Read the upstream research ↗</a></p>
+    </div>
+  </div>
+</section>
+
 <!-- ================= FEATURES ================= -->
 <section id="features">
   <div class="wrap">
     <div class="sec-head">
       <span class="sec-idx">Features</span>
       <h2>Six modules. One workstation.</h2>
-      <p>Everything a budding roboticist needs, arranged the way a flight line is: check the board, run the checks, pick the environment, load the mission.</p>
+      <p>An evolving workstation for setup, compatibility, diagnostics, hardware intake, simulation, and verification. Capabilities vary in readiness.</p>
     </div>
     <div class="feat-grid">
       <div class="feat-card">
@@ -729,7 +753,7 @@ footer a:hover{color:var(--text)}
     <div class="sec-head">
       <span class="sec-idx">Get it</span>
       <h2>Open Xcode. Press run.</h2>
-      <p>v0.1 is public and source-available. Clone it, open the package, and the workstation is yours.</p>
+      <p>The source is public and the workstation is in active development. Clone the repository, inspect the requirements, and run the current build.</p>
     </div>
     <div class="run-grid">
       <div class="code-box">
