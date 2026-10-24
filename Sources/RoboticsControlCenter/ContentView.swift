@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum Section: String, CaseIterable, Identifiable {
+enum SidebarSection: String, CaseIterable, Identifiable {
     case dashboard = "Dashboard"
     case preflight = "Preflight"
     case environments = "Environments"
@@ -23,11 +23,11 @@ enum Section: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
-    @State private var selection: Section? = .dashboard
+    @State private var selection: SidebarSection? = .dashboard
 
     var body: some View {
         NavigationSplitView {
-            List(Section.allCases, selection: $selection) { section in
+            List(SidebarSection.allCases, selection: $selection) { section in
                 Label(section.rawValue, systemImage: section.icon)
                     .tag(section)
             }
