@@ -30,6 +30,16 @@ The Linux side runs in a managed runtime under the hood (the Omega-Ubuntu
 UTM VM is the working prototype, built and tuned Oct 2026). The user never
 touches a terminal, an apt lock, or a version matrix.
 
+## Why I built it
+
+I built Darkstar Robotics because getting a robotics development environment running can feel harder than building the robot itself.
+
+Working with ROS 2, PX4, Gazebo, Linux VMs, and real hardware taught me how much time disappears into dependency conflicts, setup guides, terminal commands, and figuring out whether a failure comes from my code or the environment. I wanted a workstation that makes those problems visible and gives people a clear path to fix them.
+
+My goal isn't to hide the engineering. It's to remove unnecessary setup friction so students, independent builders, and robotics teams can spend more time experimenting, testing, and learning. Darkstar starts with the tools and workflows I've had to wrestle with myself, and grows from there.
+
+**Build the robot. Explore the system. Deploy with evidence.**
+
 ## Run it
 
 Open `Package.swift` in Xcode and press Run — or:
