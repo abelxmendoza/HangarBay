@@ -32,11 +32,15 @@ touches a terminal, an apt lock, or a version matrix.
 
 ## Why I built it
 
-I built Darkstar Robotics because getting a robotics development environment running can feel harder than building the robot itself.
+Darkstar Robotics started with two things I care about: robotics and the experience of using a MacBook.
 
-Working with ROS 2, PX4, Gazebo, Linux VMs, and real hardware taught me how much time disappears into dependency conflicts, setup guides, terminal commands, and figuring out whether a failure comes from my code or the environment. I wanted a workstation that makes those problems visible and gives people a clear path to fix them.
+After reading Steve Jobs' biography and spending years with iPhones and MacBook Pros, I became a fan of Apple's attention to design. I love that a MacBook can be lightweight, portable, and powerful enough to get real work done almost anywhere—even reclining comfortably with the laptop on my lap. I wanted robotics development to feel that approachable, without giving up the tools engineers need.
 
-My goal isn't to hide the engineering. It's to remove unnecessary setup friction so students, independent builders, and robotics teams can spend more time experimenting, testing, and learning. Darkstar starts with the tools and workflows I've had to wrestle with myself, and grows from there.
+But the software side rarely feels that simple. Working with ROS 2, PX4, Gazebo, Linux VMs, and real hardware, I've spent plenty of time fighting dependency conflicts, setup instructions, terminal commands, and failures that are hard to trace back to either my code or the environment.
+
+So I started building a native macOS workstation that brings those pieces together: clear environment checks, practical recovery steps, managed Linux runtimes, and visible test evidence. The Mac was the starting point because it's a computer I genuinely enjoy using—not because robotics should be limited to Apple hardware.
+
+My goal is to reduce setup friction for students, independent builders, and robotics teams, so they can spend more time experimenting, testing, and learning. Darkstar begins with problems I've encountered myself and will evolve as those workflows become more reliable.
 
 **Build the robot. Explore the system. Deploy with evidence.**
 
