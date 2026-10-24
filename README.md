@@ -34,13 +34,13 @@ touches a terminal, an apt lock, or a version matrix.
 
 Darkstar Robotics started with two things I care about: robotics and the experience of using a MacBook.
 
-After reading Steve Jobs' biography and spending years with iPhones and MacBook Pros, I became a fan of Apple's attention to design. I love that a MacBook can be lightweight, portable, and powerful enough to get real work done almost anywhere—even reclining comfortably with the laptop on my lap. I wanted robotics development to feel that approachable, without giving up the tools engineers need.
+After reading Steve Jobs' biography and spending years with iPhones and MacBook Pros, I became a fan of Apple's attention to design. A MacBook is lightweight, portable, and powerful enough to work from almost anywhere—even comfortably reclining with it on my lap. I wanted that ease of use to carry over into robotics development.
 
-But the software side rarely feels that simple. Working with ROS 2, PX4, Gazebo, Linux VMs, and real hardware, I've spent plenty of time fighting dependency conflicts, setup instructions, terminal commands, and failures that are hard to trace back to either my code or the environment.
+But much of the robotics ecosystem is built around Linux. When I started working with ROS 2, PX4, Gazebo, and their surrounding frameworks, getting the right versions and dependencies running on a Mac was a project in itself. I spent time wrestling with virtual machines, setup instructions, terminal commands, and failures that were hard to distinguish from bugs in my own code. I don't want the next MacBook user getting started in robotics to have to struggle through all of that.
 
-So I started building a native macOS workstation that brings those pieces together: clear environment checks, practical recovery steps, managed Linux runtimes, and visible test evidence. The Mac was the starting point because it's a computer I genuinely enjoy using—not because robotics should be limited to Apple hardware.
+That's why I'm building Darkstar: a native macOS front end for Linux-based robotics workflows, with compatible environments, clear preflight checks, actionable fixes, and visible simulation and test evidence. The aim isn't to replace Linux or hide how robotics works. It's to make those tools easier to access from a computer people already enjoy using.
 
-My goal is to reduce setup friction for students, independent builders, and robotics teams, so they can spend more time experimenting, testing, and learning. Darkstar begins with problems I've encountered myself and will evolve as those workflows become more reliable.
+I want students, independent builders, and robotics teams—especially MacBook users new to these stacks—to spend less time fighting their setup and more time building, experimenting, and learning. Darkstar starts with the problems I've encountered firsthand and grows as the workflows are tested and improved.
 
 **Build the robot. Explore the system. Deploy with evidence.**
 
