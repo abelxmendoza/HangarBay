@@ -40,6 +40,13 @@ internally; the product name is Hangar Bay.
 
 ## Status
 
+v0.2 — DARKSTAR design foundation, 2026-10-23 (see
+`docs/DARKSTAR-UI-UX-PLAN.md`). Obsidian/gunmetal theme tokens, branded
+sidebar, mission-control Dashboard, and the honesty taxonomy as a UI
+component: every status is chipped LIVE, RECORDED, DEMO, PENDING, or
+UNKNOWN — telemetry green means verified success only; signal red is
+brand + alerts only. All v0.1 runtime behavior preserved.
+
 v0.1 — first native build, written 2026-10-23. Runtime probes are real
 (utmctl, Tailscale CLI, FileManager). In-runtime checks (ROS/Gazebo/PX4)
 currently show their out-of-band verified state and move in-app with the

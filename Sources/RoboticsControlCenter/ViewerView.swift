@@ -19,6 +19,7 @@ struct ViewerView: View {
                     .onSubmit { loadedURL = URL(string: urlText) }
                 Button("Load") { loadedURL = URL(string: urlText) }
                     .buttonStyle(.borderedProminent)
+                EvidenceChip(.recorded, label: "REPLAY")
             }
             .padding(12)
             Divider()
@@ -27,6 +28,7 @@ struct ViewerView: View {
                 .font(.caption).foregroundStyle(.tertiary)
                 .padding(8)
         }
+        .background(HB.obsidian)
         .navigationTitle("Viewer")
     }
 }

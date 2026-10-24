@@ -23,6 +23,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
+    @EnvironmentObject private var runtime: RuntimeController
     @State private var selection: SidebarSection? = .dashboard
 
     var body: some View {
@@ -32,11 +33,21 @@ struct ContentView: View {
                     .tag(section)
             }
             .navigationTitle("Hangar Bay")
+            .safeAreaInset(edge: .top) {
+                brandHeader
+            }
             .safeAreaInset(edge: .bottom) {
-                SettingsLink {
-                    Label("Settings", systemImage: "gearshape")
+                VStack(alignment: .leading, spacing: 8) {
+                    if runtime.vmState == "Running" {
+                        EvidenceChip(.live, label: "RUNTIME LIVE")
+                    } else {
+                        EvidenceChip(.unknown, label: "RUNTIME \(runtime.vmState.uppercased())")
+                    }
+                    SettingsLink {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -50,5 +61,24 @@ struct ContentView: View {
             case .viewer: ViewerView()
             }
         }
+        .preferredColorScheme(.dark)
+    }
+
+    private var brandHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("HANGAR BAY")
+                .font(.system(.title3, design: .default).weight(.heavy))
+                .tracking(2.4)
+                .foregroundStyle(HB.frost)
+            Eyebrow("AUTONOMOUS SYSTEMS CONTROL")
+            Rectangle()
+                .fill(HB.signal)
+                .frame(width: 44, height: 2)
+                .padding(.top, 4)
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -29,6 +29,7 @@ struct MissionsView: View {
             .padding(24)
             .frame(maxWidth: 860, alignment: .leading)
         }
+        .background(HB.obsidian)
         .navigationTitle("Missions")
     }
 
@@ -39,10 +40,12 @@ struct MissionsView: View {
                 Text("Swarm Recovery — Golden Demo")
                     .font(.title2.bold())
                 Spacer()
+                EvidenceChip(.recorded, label: "RECORDED · 2026-09-12")
                 Text("PASS")
                     .font(.headline)
+                    .foregroundStyle(HB.telemetry)
                     .padding(.horizontal, 12).padding(.vertical, 5)
-                    .background(Capsule().fill(Color.green.opacity(0.3)))
+                    .background(Capsule().fill(HB.telemetry.opacity(0.22)))
             }
             Text("Two PX4 quadcopters divide a cooperative mission. One is commanded to retire mid-flight; the survivor confirms it landed, inherits its tasks, and finishes — while an independent verifier checks every claim from the raw telemetry.")
                 .foregroundStyle(.secondary)
@@ -64,7 +67,8 @@ struct MissionsView: View {
             }
         }
         .padding(20)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.quaternary.opacity(0.55)))
+        .background(HB.panel, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(HB.hairline, lineWidth: 1))
     }
 
     private func miniCard(title: String, icon: String, bodyText: String) -> some View {
@@ -74,7 +78,8 @@ struct MissionsView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.55)))
+        .background(HB.panel, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(HB.hairline, lineWidth: 1))
     }
 }
 

@@ -34,6 +34,7 @@ struct HardwareView: View {
             .padding(24)
             .frame(maxWidth: 860, alignment: .leading)
         }
+        .background(HB.obsidian)
         .navigationTitle("Hardware")
         .fileImporter(isPresented: $isImporterPresented, allowedContentTypes: [.image]) { result in
             if case .success(let url) = result {
@@ -106,8 +107,11 @@ struct HardwareView: View {
 
     private var fleetList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Your fleet")
-                .font(.title2.bold())
+            HStack(spacing: 10) {
+                Text("Your fleet")
+                    .font(.title2.bold())
+                EvidenceChip(.demo, label: "SAMPLE FLEET")
+            }
             ForEach(fleet) { device in
                 HStack(spacing: 12) {
                     Image(systemName: "airplane.circle")

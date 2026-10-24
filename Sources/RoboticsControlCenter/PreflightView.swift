@@ -18,6 +18,7 @@ struct PreflightView: View {
             .padding(24)
             .frame(maxWidth: 860, alignment: .leading)
         }
+        .background(HB.obsidian)
         .navigationTitle("Preflight")
     }
 
@@ -32,6 +33,8 @@ struct PreflightView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            EvidenceChip(.live, label: "LIVE PROBES")
+                .padding(.top, 2)
         }
     }
 
@@ -62,8 +65,11 @@ struct PreflightView: View {
 
     private var downloads: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Dependency downloads")
-                .font(.title2.bold())
+            HStack(spacing: 10) {
+                Text("Dependency downloads")
+                    .font(.title2.bold())
+                EvidenceChip(.pending, label: "MANIFEST")
+            }
             Text("The heavy pieces a fresh install pulls down automatically. The download engine ships with the packaging step; tonight these were provisioned by script on Omega-Ubuntu.")
                 .foregroundStyle(.secondary)
             ForEach(Dependency.samples) { dep in
@@ -98,10 +104,10 @@ struct PreflightView: View {
 
     private func color(for status: CheckStatus) -> Color {
         switch status {
-        case .pass: return .green
-        case .warn: return .orange
-        case .fail: return .red
-        case .unknown: return .secondary
+        case .pass: return HB.telemetry
+        case .warn: return HB.warning
+        case .fail: return HB.signal
+        case .unknown: return HB.steel
         }
     }
 }

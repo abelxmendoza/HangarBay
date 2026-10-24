@@ -21,7 +21,7 @@ struct EnvironmentsView: View {
                                 Text(env.status.rawValue)
                                     .font(.caption.weight(.semibold))
                                     .padding(.horizontal, 8).padding(.vertical, 3)
-                                    .background(Capsule().fill(env.status == .ready ? Color.green.opacity(0.25) : Color.secondary.opacity(0.2)))
+                                    .background(Capsule().fill(env.status == .ready ? HB.telemetry.opacity(0.25) : HB.steel.opacity(0.2)))
                             }
                             Text(env.blurb).foregroundStyle(.secondary)
                             HStack(spacing: 14) {
@@ -46,12 +46,14 @@ struct EnvironmentsView: View {
                         }
                     }
                     .padding(18)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(.quaternary.opacity(0.55)))
+                    .background(HB.panel, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(HB.hairline, lineWidth: 1))
                 }
             }
             .padding(24)
             .frame(maxWidth: 860, alignment: .leading)
         }
+        .background(HB.obsidian)
         .navigationTitle("Environments")
     }
 }
