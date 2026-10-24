@@ -1,0 +1,1569 @@
+{
+  "schema_version": 1,
+  "generated": "2026-10-23",
+  "evidence_legend": {
+    "verified": "The claim was confirmed on an official vendor/project documentation page actually fetched during this research pass (2026-10-23); the exact URLs are in the entry's sources.",
+    "proposed": "The claim comes from the Phase 1 spec, the 2026-10-23 catalog proposal, a search-result snippet, or researcher inference, and was NOT confirmed on a fetched official page. Proposed claims must not be enforced as compatibility rules until verified."
+  },
+  "tools": [
+    {
+      "id": "ros2",
+      "name": "ROS 2",
+      "kind": "framework",
+      "purpose": "Middleware framework and library ecosystem for building robot applications; the base layer other ROS tools run on.",
+      "category": "Frameworks",
+      "homepage": "https://www.ros.org/",
+      "docs": {
+        "install": "https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html",
+        "main": "https://docs.ros.org"
+      },
+      "platforms": [
+        {
+          "os": "Ubuntu 24.04 LTS (amd64, arm64)",
+          "detail": "Tier 1 for ROS 2 Jazzy per REP 2000 (full unit/CI/packaging testing).",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "os": "Ubuntu 22.04 LTS (amd64, arm64)",
+          "detail": "Tier 1 for ROS 2 Humble per REP 2000.",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "os": "Windows 10 (amd64, VS2019)",
+          "detail": "Tier 1 for both Jazzy and Humble per REP 2000.",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "os": "macOS",
+          "detail": "Tier 3 only (community reports, no dev-team testing) for Jazzy and Humble per REP 2000.",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "os": "RHEL 9 (Jazzy) / RHEL 8 (Humble), amd64",
+          "detail": "Tier 2 (periodic CI) per REP 2000.",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "Existence of /opt/ros/<distro>/setup.bash (e.g. /opt/ros/jazzy/setup.bash, /opt/ros/humble/setup.bash); after sourcing, $ROS_DISTRO names the distro. This /opt/ros layout and sourcing step are what Nav2's and Gazebo's official install docs both build on.",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.nav2.org/development_guides/build_docs/index.html",
+            "https://gazebosim.org/docs/harmonic/ros_installation/"
+          ]
+        },
+        {
+          "method": "command",
+          "detail": "ros2 --version and sourcing checks from the Phase 1 spec sketch (spec-sourced; the string was not confirmed on a fetched docs.ros.org page in this pass because docs.ros.org blocked fetching).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        },
+        {
+          "method": "package",
+          "detail": "apt packages ros-<distro>-desktop / ros-<distro>-ros-base (names seen only in search-result snippets of the blocked docs.ros.org install page).",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Distro-to-Ubuntu pairing: Jazzy targets Ubuntu 24.04, Humble targets Ubuntu 22.04 (REP 2000 Tier 1).",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "rule": "Support windows per REP 2000: Jazzy May 2024 - May 2029; Humble May 2022 - May 2027.",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        },
+        {
+          "rule": "REP 2000 dependency floors for Jazzy: Gazebo Harmonic, C++17 minimum, Python 3.8 minimum language requirement (Ubuntu Noble ships Python 3.12.3).",
+          "evidence": "verified",
+          "sources": [
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "gazebo",
+      "name": "Gazebo",
+      "kind": "application",
+      "purpose": "3D robotics simulator (Gazebo Sim) with its own library suite; runs standalone and integrates with ROS 2 via ros_gz.",
+      "category": "Simulation",
+      "homepage": "https://gazebosim.org/",
+      "docs": {
+        "install": "https://gazebosim.org/docs/harmonic/install_ubuntu/",
+        "main": "https://gazebosim.org/docs/latest/getstarted/"
+      },
+      "platforms": [
+        {
+          "os": "Ubuntu 24.04 LTS",
+          "detail": "Gazebo Jetty (recommended) and Gazebo Harmonic (recommended if using ROS 2 Jazzy) per the official get-started matrix.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/latest/getstarted/"
+          ]
+        },
+        {
+          "os": "Ubuntu 22.04 LTS",
+          "detail": "Gazebo Harmonic (recommended) and Gazebo Fortress (recommended if using ROS 2 Humble). Harmonic binaries are provided for Jammy and Noble via packages.osrfoundation.org.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/latest/getstarted/",
+            "https://gazebosim.org/docs/harmonic/install_ubuntu/"
+          ]
+        },
+        {
+          "os": "macOS Ventura / Monterey",
+          "detail": "Gazebo Harmonic (recommended) and Fortress per the official get-started matrix.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/latest/getstarted/"
+          ]
+        },
+        {
+          "os": "Windows",
+          "detail": "Support via Conda-Forge is 'not fully functional, as there are known runtime issues' per official docs.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/latest/getstarted/"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "package",
+          "detail": "apt metapackage gz-harmonic installs all Harmonic libraries on Ubuntu (per-release metapackages follow the same gz-<release> pattern).",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/harmonic/install_ubuntu/"
+          ]
+        },
+        {
+          "method": "command",
+          "detail": "The gz sim executable is the launch/detection entry point after install; note Fortress uses a different command, ign gazebo, instead of gz sim.",
+          "platforms": [
+            "linux",
+            "macos"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/harmonic/install_ubuntu/",
+            "https://gazebosim.org/docs/latest/getstarted/"
+          ]
+        },
+        {
+          "method": "package",
+          "detail": "With ROS 2 integration installed: apt package ros-<distro>-ros-gz present under /opt/ros/<distro>.",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/harmonic/ros_installation/"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Official ros_gz pairing table: Jazzy<->Harmonic and Humble<->Fortress are the recommended pairings; Kilted<->Ionic; Lyrical/Rolling<->Jetty.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/harmonic/ros_installation/"
+          ]
+        },
+        {
+          "rule": "Incompatible per the official table: Jazzy with Fortress, Ionic, or Jetty; Humble with Ionic or Jetty.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/harmonic/ros_installation/"
+          ]
+        },
+        {
+          "rule": "Lifetimes: Harmonic (LTS) EOL May 2029; Fortress (LTS) EOL May 2027.",
+          "evidence": "verified",
+          "sources": [
+            "https://gazebosim.org/docs/latest/getstarted/"
+          ]
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "ros2",
+          "type": "optional",
+          "why": "The ros_gz bridge integrates Gazebo with ROS 2 under the official pairings; Gazebo is an independent project and runs standalone without ROS 2."
+        }
+      ]
+    },
+    {
+      "id": "rviz2",
+      "name": "RViz2",
+      "kind": "application",
+      "purpose": "3D visualizer for ROS 2 data (topics, TF, robot models); ships as a ROS 2 package, not a standalone product.",
+      "category": "Visualization",
+      "homepage": "https://index.ros.org/r/rviz/",
+      "docs": {
+        "install": "https://docs.ros.org",
+        "main": "https://index.ros.org/r/rviz/"
+      },
+      "platforms": [
+        {
+          "os": "Same platforms as the installed ROS 2 distro",
+          "detail": "RViz2 releases are published per ROS distro (humble, jazzy, kilted, lyrical, rolling on the ROS index), so its platform support is the distro's REP 2000 tier matrix.",
+          "evidence": "verified",
+          "sources": [
+            "https://index.ros.org/r/rviz/",
+            "https://reps.openrobotics.org/rep-2000/"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "package",
+          "detail": "ROS package rviz2 present in the sourced distro (package directory under /opt/ros/<distro>/); the ROS index lists per-distro rviz2 releases (e.g. 11.2.29 for Humble, 14.1.24 for Jazzy at research time).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://index.ros.org/r/rviz/"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "RViz2 versioning is locked to the ROS 2 distro: each distro carries its own rviz2 version series, and RViz is part of the official ROS 2 repos file installed via the ROS 2 installation instructions.",
+          "evidence": "verified",
+          "sources": [
+            "https://index.ros.org/r/rviz/"
+          ]
+        },
+        {
+          "rule": "The common claim 'RViz2 is included in the ros-<distro>-desktop install variant' could not be confirmed verbatim from a fetched official page (docs.ros.org blocked fetching); treat desktop-variant membership as unconfirmed.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "ros2",
+          "type": "required",
+          "why": "RViz2 is a ROS 2 package from the official ROS 2 repos and only runs inside a sourced ROS 2 environment."
+        }
+      ]
+    },
+    {
+      "id": "nav2",
+      "name": "Nav2",
+      "kind": "framework",
+      "purpose": "Autonomous navigation framework for mobile robots (planning, control, localization, behaviours) delivered as a ROS 2 package stack.",
+      "category": "Frameworks",
+      "homepage": "https://docs.nav2.org/",
+      "docs": {
+        "install": "https://docs.nav2.org/development_guides/build_docs/index.html",
+        "main": "https://docs.nav2.org/"
+      },
+      "platforms": [
+        {
+          "os": "Platforms of the underlying ROS 2 distro",
+          "detail": "Nav2 publishes per distro (Humble: Maintained, Jazzy: Active Support, Kilted: Maintained, Rolling: Development per its docs) and states no separate OS matrix; binary packages exist for Humble, Jazzy, Kilted and Rolling per the official build docs (pre-built Docker images listed for the same set).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.nav2.org/rolling/",
+            "https://docs.nav2.org/development_guides/build_docs/index.html"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "package",
+          "detail": "apt/ROS packages ros-$ROS_DISTRO-navigation2 and ros-$ROS_DISTRO-nav2-bringup installed for the sourced distro (e.g. ros-jazzy-navigation2 under /opt/ros/jazzy/).",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.nav2.org/development_guides/build_docs/index.html"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Alternative source install: a colcon workspace (e.g. ~/nav2_ws) containing the navigation2 checkout built against $ROS_DISTRO.",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.nav2.org/development_guides/build_docs/index.html"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Nav2 branches and binaries are organised by ROS distro; the default branch for Rolling is main, and Nav2 does not release binaries on Rolling (source build required there).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.nav2.org/development_guides/build_docs/index.html"
+          ]
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "ros2",
+          "type": "required",
+          "why": "Every official Nav2 install/build path starts by sourcing /opt/ros/<distro>/setup.bash; Nav2 is a ROS 2 package stack."
+        },
+        {
+          "tool": "gazebo",
+          "type": "optional",
+          "why": "Nav2's simulation quickstart runs a TurtleBot in Gazebo; navigation on a real robot needs no simulator."
+        },
+        {
+          "tool": "docker",
+          "type": "optional",
+          "why": "Nav2 docs offer pre-built Docker images and dev containers as an alternative install route, never a requirement."
+        }
+      ]
+    },
+    {
+      "id": "px4",
+      "name": "PX4 Autopilot",
+      "kind": "framework",
+      "purpose": "Open-source autopilot flight stack for drones and other autonomous vehicles; developed as a source checkout and built locally (incl. SITL simulation).",
+      "category": "Autonomy",
+      "homepage": "https://px4.io/",
+      "docs": {
+        "install": "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu",
+        "main": "https://docs.px4.io/main/en/index"
+      },
+      "platforms": [
+        {
+          "os": "Ubuntu 24.04 LTS and Ubuntu 22.04 LTS",
+          "detail": "The Ubuntu LTS versions supported by PX4 per its dev-environment docs; CI/release target is 24.04, build tests also run on 22.04; Ubuntu 26.04 is explicitly not yet supported.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu"
+          ]
+        },
+        {
+          "os": "macOS (Intel and Apple Silicon)",
+          "detail": "PX4 macOS dev environment builds for Pixhawk/NuttX hardware and Gazebo simulation; CI exercises Apple Silicon only. No macOS version number is named in the docs.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_mac"
+          ]
+        },
+        {
+          "os": "Windows 10 or 11",
+          "detail": "Supported only as Ubuntu Linux running inside WSL2 (default Ubuntu 22.04; 22.04 and 24.04 options), not a native Windows toolchain.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_windows_wsl"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "A recursive git checkout of PX4-Autopilot (github.com/PX4/PX4-Autopilot) with the dev environment set up via Tools/setup/ubuntu.sh (or macos.sh).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu",
+            "https://docs.px4.io/main/en/dev_setup/dev_env_mac"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Built SITL binary at build/px4_sitl_default/bin/px4 inside the checkout (the path PX4's own Gazebo simulation docs invoke).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/sim_gazebo_gz/"
+          ]
+        },
+        {
+          "method": "command",
+          "detail": "arm-none-eabi-gcc --version is PX4 docs' own toolchain verification for the NuttX build toolchain installed by the setup script.",
+          "platforms": [
+            "linux",
+            "macos"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu",
+            "https://docs.px4.io/main/en/dev_setup/dev_env_mac"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "PX4's supported and recommended ROS 2 platform is ROS 2 Jazzy LTS on Ubuntu 24.04; on Ubuntu 22.04 use ROS 2 Humble LTS instead.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/ros2/user_guide"
+          ]
+        },
+        {
+          "rule": "ROS 2 applications must use px4_msgs with the same message definitions as the firmware; from PX4 v1.16 (message versioning) a different version is possible only with the ROS 2 Message Translation Node running.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/ros2/user_guide"
+          ]
+        },
+        {
+          "rule": "PX4's Ubuntu dev setup installs Gazebo Harmonic by default; on Ubuntu 24.04 Gazebo Harmonic, Ionic and Jetty are supported, and modern Gazebo supersedes Gazebo Classic for Ubuntu 22.04 onwards.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu",
+            "https://docs.px4.io/main/en/sim_gazebo_gz/"
+          ]
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "gazebo",
+          "type": "optional",
+          "why": "PX4 SITL's current default simulator is Gazebo (installed by the dev setup), but PX4 builds and flies without it and other SITL modes exist."
+        },
+        {
+          "tool": "ros2",
+          "type": "optional",
+          "why": "Only needed for ROS 2 companion-computer integration over uXRCE-DDS; the autopilot and its SITL do not require ROS 2."
+        }
+      ]
+    },
+    {
+      "id": "qgroundcontrol",
+      "name": "QGroundControl",
+      "kind": "application",
+      "purpose": "Ground-control station application for flight control, vehicle setup and mission planning for PX4/ArduPilot (MAVLink) vehicles.",
+      "category": "Ground Control",
+      "homepage": "https://qgroundcontrol.com/",
+      "docs": {
+        "install": "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html",
+        "main": "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/index.html"
+      },
+      "platforms": [
+        {
+          "os": "Windows 10 (1809 or later) and Windows 11",
+          "detail": "Supported versions per the Stable V5.1 download page; installers for x86_64 and Arm64.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "os": "macOS 13 (Ventura) or later",
+          "detail": "Stable V5.1 download page; universal binary (Apple Silicon + Intel), signed and notarized, installed by dragging QGroundControl to Applications. Note: the master/daily docs raise this floor to macOS 14.4 or later.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html",
+            "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "os": "Ubuntu 24.04 LTS and 26.04 LTS",
+          "detail": "AppImage downloads (x86_64 and aarch64) run on these versions; Ubuntu 22.04 is possible only by building QGC yourself.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "os": "Android 9 (API 28) or later",
+          "detail": "Supported per the Stable V5.1 download page (arm 32/64 APK).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "Linux: an executable QGroundControl AppImage file (QGroundControl-<arch>.AppImage) — the official Linux distribution form.",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "macOS: QGroundControl.app in the Applications folder (drag-installed from the official .dmg).",
+          "platforms": [
+            "macos"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Windows: presence of the installed application from the official installer executable; the fetched docs do not state a Windows install path, so the exact location is unconfirmed.",
+          "platforms": [
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "QGC's own guidance: a computer with at least 8 GB RAM, an SSD, Nvidia or AMD graphics and an i5 or better CPU suits most applications.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "rule": "Linux pre-install requirements per the download page: user in the dialout group for serial access, and libfuse2 plus XCB libraries for the AppImage.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+          ]
+        },
+        {
+          "rule": "No QGC command-line version flag is documented on the fetched official pages; do not rely on a --version probe for QGC.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "mavsdk",
+      "name": "MAVSDK",
+      "kind": "sdk",
+      "purpose": "Library/SDK for programmatic control of MAVLink systems: a C++ library plus language wrappers (Python package on PyPI, Swift, Java, others). It is NOT a standalone application.",
+      "category": "SDKs",
+      "homepage": "https://mavsdk.mavlink.io/v1.0/en/",
+      "docs": {
+        "install": "https://mavsdk.mavlink.io/main/en/python/quickstart.html",
+        "main": "https://mavsdk.mavlink.io/v1.0/en/"
+      },
+      "platforms": [
+        {
+          "os": "Linux, macOS, Windows, Android, iOS",
+          "detail": "MAVSDK describes itself as cross-platform across these systems (v1.0 guide introduction).",
+          "evidence": "verified",
+          "sources": [
+            "https://mavsdk.mavlink.io/v1.0/en/"
+          ]
+        },
+        {
+          "os": "Python wheels: Linux x86_64 and aarch64 (incl. 64-bit Raspberry Pi OS); macOS x86_64 and arm64; Windows x86, x64 and arm64",
+          "detail": "Wheel availability per the Python quickstart; explicitly no wheels for 32-bit ARM Linux (armv6/armv7) — use mavsdk-grpc or a 64-bit OS there.",
+          "evidence": "verified",
+          "sources": [
+            "https://mavsdk.mavlink.io/main/en/python/quickstart.html"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "package",
+          "detail": "Python package metadata for the PyPI package mavsdk in the active environment (e.g. pip show mavsdk) — the check is the standard pip-metadata probe for the package the quickstart installs with pip install mavsdk; the literal command is not printed in MAVSDK's docs.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        },
+        {
+          "method": "package",
+          "detail": "C++ form: the libmavsdk-dev .deb installed on Ubuntu, or the Homebrew formula mavsdk on macOS, per the C++ quickstart's install routes.",
+          "platforms": [
+            "linux",
+            "macos"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://mavsdk.mavlink.io/main/en/cpp/quickstart.html"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Python form requires Python 3.8 or later.",
+          "evidence": "verified",
+          "sources": [
+            "https://mavsdk.mavlink.io/main/en/python/quickstart.html"
+          ]
+        },
+        {
+          "rule": "C++ examples must match the installed MAVSDK version's branch (e.g. check out branch v2 for an installed v2.x.y).",
+          "evidence": "verified",
+          "sources": [
+            "https://mavsdk.mavlink.io/main/en/cpp/quickstart.html"
+          ]
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "px4",
+          "type": "optional",
+          "why": "MAVSDK needs a MAVLink system to talk to and its docs use a running PX4 SITL as the test target, but any MAVLink autopilot works and the library installs standalone."
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "kind": "application",
+      "purpose": "Container platform in two forms: Docker Engine (daemon + CLI, native on Linux) and Docker Desktop (application bundling the engine for macOS/Windows/Linux).",
+      "category": "Development",
+      "homepage": "https://www.docker.com/",
+      "docs": {
+        "install": "https://docs.docker.com/get-started/get-docker/",
+        "main": "https://docs.docker.com/"
+      },
+      "platforms": [
+        {
+          "os": "Ubuntu 26.10 / 26.04 LTS / 24.04 LTS / 22.04 LTS (64-bit; x86_64, armhf, arm64, s390x, ppc64le)",
+          "detail": "Docker Engine supported Ubuntu versions per the official Engine install page; Ubuntu derivatives such as Linux Mint are not officially supported.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/engine/install/ubuntu/"
+          ]
+        },
+        {
+          "os": "Ubuntu 26.04 LTS or 24.04 LTS (x86-64)",
+          "detail": "Docker Desktop on Linux system requirement per the official Desktop install page; installs to /opt/docker-desktop.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/desktop/setup/install/linux/ubuntu/"
+          ]
+        },
+        {
+          "os": "Windows 10 64-bit 22H2 (build 19045) / Windows 11 64-bit 23H2 (build 22631) or higher, WSL 2.1.5 or later, 8 GB RAM",
+          "detail": "Docker Desktop on Windows requirements per the official install page; Desktop is not supported on Windows Server versions.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/desktop/setup/install/windows-install/"
+          ]
+        },
+        {
+          "os": "macOS: current and two previous major releases; at least 4 GB RAM",
+          "detail": "Docker Desktop on Mac support rule per the official install page; separate Apple silicon and Intel downloads; installs as /Applications/Docker.app.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/desktop/setup/install/mac-install/"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "command",
+          "detail": "docker info (alias docker system info) succeeding against a running daemon distinguishes an operational Docker from a CLI-only install — the classic installed-but-not-configured false positive.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/reference/cli/docker/system/info/"
+          ]
+        },
+        {
+          "method": "package",
+          "detail": "Linux Engine packages docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin present (the .deb set installed by the official Engine instructions).",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/engine/install/ubuntu/"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Docker Desktop install locations: /Applications/Docker.app (macOS), /opt/docker-desktop (Linux), %LOCALAPPDATA%\\Programs\\DockerDesktop (Windows per-user install).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/desktop/setup/install/mac-install/",
+            "https://docs.docker.com/desktop/setup/install/linux/ubuntu/",
+            "https://docs.docker.com/desktop/setup/install/windows-install/"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Conflicting unofficial packages (docker.io, docker-compose, podman-docker, etc.) must be uninstalled before installing Docker Engine.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/engine/install/ubuntu/"
+          ]
+        },
+        {
+          "rule": "Docker Desktop commercial use in enterprises over 250 employees or over $10M annual revenue requires a paid subscription (stated on the official Desktop install pages).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.docker.com/desktop/setup/install/windows-install/",
+            "https://docs.docker.com/desktop/setup/install/mac-install/"
+          ]
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "vscode",
+      "name": "Visual Studio Code",
+      "kind": "ide",
+      "purpose": "Free, open-source code editor application; language toolchains and robotics extensions are user-installed add-ons, not bundled.",
+      "category": "Development",
+      "homepage": "https://code.visualstudio.com/",
+      "docs": {
+        "install": "https://code.visualstudio.com/Download",
+        "main": "https://code.visualstudio.com/docs"
+      },
+      "platforms": [
+        {
+          "os": "Windows client (64-bit); download requires Windows 10 or 11 (64-bit)",
+          "detail": "Per the official requirements and download pages.",
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/supporting/requirements",
+            "https://code.visualstudio.com/Download"
+          ]
+        },
+        {
+          "os": "macOS versions with Apple security update support (typically latest release and two previous)",
+          "detail": "Stated as a rule, not a numbered version, on the official requirements page.",
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/supporting/requirements"
+          ]
+        },
+        {
+          "os": "Linux (Debian): Ubuntu Desktop 20.04, Debian 10; Linux (Red Hat): RHEL 8, Fedora 36",
+          "detail": "Per the official requirements page; Linux additionally needs GLIBC 2.28+ and GLIBCXX 3.4.25+.",
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/supporting/requirements"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "command",
+          "detail": "code --version (documented as -v/--version in the official CLI reference, printing version, commit and architecture). On macOS the code command is on PATH only after running the Shell Command: Install 'code' step.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/configure/command-line"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Windows user-setup install location %LOCALAPPDATA%\\Programs\\Microsoft VS Code.",
+          "platforms": [
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/setup/windows"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Recommended hardware per official requirements: 1.6 GHz or faster processor, 1 GB RAM; download under 200 MB, disk footprint under 500 MB.",
+          "evidence": "verified",
+          "sources": [
+            "https://code.visualstudio.com/docs/supporting/requirements"
+          ]
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "platformio",
+      "name": "PlatformIO",
+      "kind": "ide",
+      "purpose": "Embedded development platform: PlatformIO Core (CLI, command pio) plus PlatformIO IDE extensions — the recommended route is the VS Code extension; projects select boards and frameworks (Arduino, ESP-IDF, others) per environment in platformio.ini.",
+      "category": "Embedded Development",
+      "homepage": "https://platformio.org/",
+      "docs": {
+        "install": "https://docs.platformio.org/en/stable/core/installation/methods/installer-script.html",
+        "main": "https://docs.platformio.org/en/latest/integration/ide/pioide.html"
+      },
+      "platforms": [
+        {
+          "os": "Windows, macOS, Linux (via the VS Code route)",
+          "detail": "PlatformIO IDE is built on VS Code, which its docs describe as available for Windows, macOS and Linux; the Core installer script documents a Windows flow and terminal flows for other systems. A formal Core host-OS support list was not stated on the fetched pages.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.platformio.org/en/latest/integration/ide/vscode.html",
+            "https://docs.platformio.org/en/stable/core/installation/methods/installer-script.html"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "command",
+          "detail": "pio --version (equivalently platformio --version) — --version is listed in PlatformIO Core's official CLI guide.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.platformio.org/en/stable/core/userguide/index.html"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Standalone Core lives in a Python virtual environment at core_dir/penv (installer-script installs); the VS Code extension route bundles Core inside PlatformIO IDE, so absence of a standalone pio does not prove absence.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.platformio.org/en/stable/core/installation/methods/installer-script.html",
+            "https://docs.platformio.org/en/latest/integration/ide/vscode.html"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Linux IDE route requires the python3-venv package for a smooth PlatformIO experience (docs' wording).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.platformio.org/en/latest/integration/ide/vscode.html"
+          ]
+        },
+        {
+          "rule": "Arduino framework selection in platformio.ini (platform = espressif32, framework = arduino, board = esp32dev) is shown in the official VS Code integration docs.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.platformio.org/en/latest/integration/ide/vscode.html"
+          ]
+        },
+        {
+          "rule": "Selecting ESP-IDF inside PlatformIO as framework = espidf for the espressif32 platform: seen only in a PlatformIO Registry example (search result, not a fetched docs page), so treat the exact framework key as unconfirmed in this pass.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "vscode",
+          "type": "optional",
+          "why": "PlatformIO IDE is an extension built on VS Code and is the recommended route, but PlatformIO Core CLI installs and runs standalone without it."
+        }
+      ]
+    },
+    {
+      "id": "esp-idf",
+      "name": "ESP-IDF",
+      "kind": "framework",
+      "purpose": "Espressif's official IoT development framework/SDK for its own ESP32-family chips: API libraries and source plus the idf.py build/flash tooling and toolchains.",
+      "category": "Embedded Development",
+      "homepage": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/index.html",
+      "docs": {
+        "install": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/linux-setup.html",
+        "main": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/index.html"
+      },
+      "platforms": [
+        {
+          "os": "Windows, Linux, macOS (host)",
+          "detail": "Get Started hardware requirements: a computer running Windows, Linux, or macOS; current installs use the ESP-IDF Installation Manager (EIM) with per-OS pages. Legacy (v5.2-era) prerequisites are documented for Ubuntu/Debian, CentOS 7 & 8, Arch, and macOS via Homebrew/MacPorts.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/index.html",
+            "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32p4/get-started/linux-macos-setup.html"
+          ]
+        },
+        {
+          "os": "ESP32-family targets (per-chip Get Started guides)",
+          "detail": "Full setup guides verified for ESP32-C5 (latest) and ESP32-P4 (v5.2), with install.sh target examples esp32, esp32s2 and 'all'; no single exhaustive chip list was confirmed on one fetched page.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/index.html",
+            "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32p4/get-started/linux-macos-setup.html"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "Checkout at ~/esp/esp-idf with environment activation via . ~/esp/esp-idf/export.sh; tools live under $HOME/.espressif by default (IDF_TOOLS_PATH overrides). This is the legacy flow that was default before ESP-IDF v6.0; current installs may instead be EIM-managed (eim / eim-cli command present).",
+          "platforms": [
+            "linux",
+            "macos"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32p4/get-started/linux-macos-setup.html",
+            "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/linux-setup.html"
+          ]
+        },
+        {
+          "method": "command",
+          "detail": "After sourcing export.sh, idf.py resolves and runs (idf.py set-target / build / flash are the documented project commands). The specific flag idf.py --version was not stated on a fetched page.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Python 3.11 is the minimum supported version for ESP-IDF (latest Linux setup page).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/linux-setup.html"
+          ]
+        },
+        {
+          "rule": "CMake 3.16 or newer is required (v5.2 setup docs).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32p4/get-started/linux-macos-setup.html"
+          ]
+        },
+        {
+          "rule": "The ESP-IDF build system does not support spaces in the paths to ESP-IDF or to projects.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32p4/get-started/linux-macos-setup.html"
+          ]
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "openocd",
+          "type": "optional",
+          "why": "OpenOCD is the JTAG debug server in ESP-IDF debug flows; building and flashing firmware do not require a standalone OpenOCD."
+        }
+      ]
+    },
+    {
+      "id": "arduino-ide",
+      "name": "Arduino IDE",
+      "kind": "ide",
+      "purpose": "Arduino IDE 2 desktop application for writing, compiling and uploading sketches; board support arrives via installable Board Packages/cores, not built in.",
+      "category": "Embedded Development",
+      "homepage": "https://www.arduino.cc/en/software",
+      "docs": {
+        "install": "https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing",
+        "main": "https://docs.arduino.cc/software/ide"
+      },
+      "platforms": [
+        {
+          "os": "Windows: Win 10 and newer, 64 bits",
+          "detail": "Per the official IDE 2 download/install guide.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing"
+          ]
+        },
+        {
+          "os": "Linux: 64 bits",
+          "detail": "Distributed as an AppImage 64 bits (X86-64); FUSE must be installed (e.g. libfuse2 on Ubuntu 22.04+).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing"
+          ]
+        },
+        {
+          "os": "macOS: 10.15 Catalina or newer, 64 bits",
+          "detail": "Per the official IDE 2 download/install guide; installed by copying the downloaded file into the Applications folder.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "Presence of the installed IDE 2 application per OS: the copied application in the macOS Applications folder, the installed Windows application, or the executable Linux AppImage file. The exact bundle/binary name was not stated on the fetched official pages.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Target-board support is add-on only: boards are installed through the IDE's Board Manager as Board Packages.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.arduino.cc/software/ide"
+          ]
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "stm32cubeide",
+      "name": "STM32CubeIDE",
+      "kind": "ide",
+      "purpose": "STMicroelectronics' C/C++ IDE application for STM32 MCUs/MPUs (Eclipse-based variant; a VS Code-based variant launched 2025 is now ST's focus). Bundles GNU Arm toolchain, STM32CubeProgrammer CLI and debug servers.",
+      "category": "Embedded Development",
+      "homepage": "https://www.st.com/en/development-tools/stm32cubeide",
+      "docs": {
+        "install": "https://www.st.com/content/ccc/resource/technical/document/user_manual/group1/31/8b/03/27/25/c5/4d/ae/DM00603964/files/DM00603964.pdf/jcr:content/translations/en.DM00603964.pdf",
+        "main": "https://www.st.com/en/development-tools/stm32cubeide"
+      },
+      "platforms": [
+        {
+          "os": "Windows 10 / 11 (64-bit only); Ubuntu LTS 22.04 and 24.04, Fedora 43 (Linux); macOS 15 (Sequoia) and 26 (Tahoe)",
+          "detail": "Per ST's installation guide UM2563 Rev 7 (Feb 2026): only 64-bit OS versions supported; 2 GB RAM minimum (4 GB recommended), 6 GB free disk (15 GB for OpenSTLinux MPU work).",
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/content/ccc/resource/technical/document/user_manual/group1/31/8b/03/27/25/c5/4d/ae/DM00603964/files/DM00603964.pdf/jcr:content/translations/en.DM00603964.pdf"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "package",
+          "detail": "Debian/RPM package presence: ststm32cubeide_<version>_amd64.deb / .rpm installed via ST's deb_bundle.sh / rpm_bundle.sh installers.",
+          "platforms": [
+            "linux"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/content/ccc/resource/technical/document/user_manual/group1/31/8b/03/27/25/c5/4d/ae/DM00603964/files/DM00603964.pdf/jcr:content/translations/en.DM00603964.pdf"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Installed application presence: STM32CubeIDE in the macOS Applications folder (dragged from the official .dmg), or the installed program location on Windows/Linux; no CLI --version for the IDE is documented.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/content/ccc/resource/technical/document/user_manual/group1/31/8b/03/27/25/c5/4d/ae/DM00603964/files/DM00603964.pdf/jcr:content/translations/en.DM00603964.pdf"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "ST's own documents disagree on supported OS versions: UM2563 Rev 7 lists Ubuntu LTS 22.04/24.04 and Fedora 43, while release note RN0114 (CubeIDE v2.2.0) lists Ubuntu LTS 26.04 and Fedora 44 (both list Windows 10/11 and macOS 15/26). Version-pin any platform claim to a specific CubeIDE release before enforcing it.",
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/content/ccc/resource/technical/document/user_manual/group1/31/8b/03/27/25/c5/4d/ae/DM00603964/files/DM00603964.pdf/jcr:content/translations/en.DM00603964.pdf",
+            "https://www.st.com/resource/en/release_note/rn0114-stm32cubeide-release-v220-stmicroelectronics.pdf"
+          ]
+        },
+        {
+          "rule": "In current 2.x releases STM32CubeMX is detached from the CubeIDE integration (RN0114 records the v2.0.0 detachment): CubeMX is a companion tool, not a bundled component.",
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/resource/en/release_note/rn0114-stm32cubeide-release-v220-stmicroelectronics.pdf"
+          ]
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "zephyr",
+      "name": "Zephyr",
+      "kind": "framework",
+      "purpose": "Open-source RTOS delivered as source, with the west meta-tool (Python CLI) managing workspaces/build/flash/debug, and the Zephyr SDK providing per-architecture toolchains and host tools.",
+      "category": "Embedded Development",
+      "homepage": "https://zephyrproject.org/",
+      "docs": {
+        "install": "https://docs.zephyrproject.org/latest/develop/getting_started/index.html",
+        "main": "https://docs.zephyrproject.org/latest/develop/getting_started/index.html"
+      },
+      "platforms": [
+        {
+          "os": "Ubuntu 24.04 LTS and later, macOS, Windows (host)",
+          "detail": "The Getting Started guide sets up a command-line environment on Ubuntu, macOS or Windows and covers Ubuntu 24.04 LTS and later; the Zephyr SDK bundle supports Linux, macOS and Windows (Linux bundles for x86_64 and aarch64 hosts).",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.zephyrproject.org/latest/develop/getting_started/index.html",
+            "https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html#toolchain-zephyr-sdk"
+          ]
+        },
+        {
+          "os": "500+ target boards across ARC, ARM, RISC-V, x86 and more",
+          "detail": "Target breadth per the Zephyr Project FAQ and SDK architecture list.",
+          "evidence": "verified",
+          "sources": [
+            "https://zephyrproject.org/faqs/",
+            "https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html#toolchain-zephyr-sdk"
+          ]
+        }
+      ],
+      "detection": [
+        {
+          "method": "path",
+          "detail": "A west workspace (conventionally ~/zephyrproject) with west installed in its Python venv (~/zephyrproject/.venv): west is only on PATH when the venv is activated, per the Getting Started guide.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.zephyrproject.org/latest/develop/getting_started/index.html"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Zephyr SDK extracted as ~/zephyr-sdk-<version> (or another documented root) with setup.sh run, or ZEPHYR_SDK_INSTALL_DIR pointing at the install; alternatively installed via west sdk install.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html#toolchain-zephyr-sdk",
+            "https://docs.zephyrproject.org/latest/develop/getting_started/index.html"
+          ]
+        },
+        {
+          "method": "command",
+          "detail": "west --version as a probe: the fetched west docs state west --help / west -h but not --version, so this common probe is unconfirmed against fetched docs.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "Host dependency minimums per Getting Started: CMake 3.28.0, Python 3.12 (strongly recommended; newer Python may fail on some systems), devicetree compiler 1.4.6.",
+          "evidence": "verified",
+          "sources": [
+            "https://docs.zephyrproject.org/latest/develop/getting_started/index.html"
+          ]
+        },
+        {
+          "rule": "Each Zephyr version has a recommended Zephyr SDK version; the exact pairing numbers live in the Zephyr SDK Version Compatibility Matrix, which was not fetched in this pass — do not enforce specific SDK-version pairings yet.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "depends_on": [
+        {
+          "tool": "openocd",
+          "type": "optional",
+          "why": "The Zephyr SDK bundles its own OpenOCD build used to flash and debug Zephyr applications; a standalone OpenOCD is an alternative source of the same capability, not an added requirement."
+        }
+      ]
+    },
+    {
+      "id": "openocd",
+      "name": "OpenOCD",
+      "kind": "cli",
+      "purpose": "Open On-Chip Debugger: a debug-server CLI that provides JTAG/SWD debugging, in-system programming and boundary-scan testing for embedded targets via a debug adapter; GDB connects to it.",
+      "category": "Diagnostics",
+      "homepage": "http://openocd.org/",
+      "docs": {
+        "install": "http://openocd.org/doc/html/index.html",
+        "main": "http://openocd.org/doc/html/index.html"
+      },
+      "platforms": [
+        {
+          "os": "Host OS list not confirmed from OpenOCD's own fetched pages",
+          "detail": "The fetched User's Guide pages describe target/adapter support, not a host-OS support matrix; in practice OpenOCD most often arrives bundled (Zephyr SDK host tools, STM32CubeIDE) rather than as a standalone install. Treat any standalone host-OS claim as unverified until the guide's install/running chapters are fetched.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "detection": [
+        {
+          "method": "command",
+          "detail": "openocd --version on PATH — the standard probe, but the flag was not confirmed on a fetched official page in this pass (the User's Guide 'Running' chapter failed to fetch).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "proposed",
+          "sources": []
+        },
+        {
+          "method": "path",
+          "detail": "Bundled copy inside a Zephyr SDK install: OpenOCD ships as an SDK host tool (its udev rules file 60-openocd.rules sits under the SDK hosttools sysroot share/openocd/contrib/).",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html#toolchain-zephyr-sdk"
+          ]
+        },
+        {
+          "method": "path",
+          "detail": "Bundled copy inside STM32CubeIDE: the v2.2.0 release note's bundle list includes an Open On-Chip Debugger component.",
+          "platforms": [
+            "linux",
+            "macos",
+            "windows"
+          ],
+          "evidence": "verified",
+          "sources": [
+            "https://www.st.com/resource/en/release_note/rn0114-stm32cubeide-release-v220-stmicroelectronics.pdf"
+          ]
+        }
+      ],
+      "version_constraints": [
+        {
+          "rule": "No standalone OpenOCD version floor is stated on the fetched guide pages; bundled versions are per-consumer (e.g. STM32CubeIDE v2.2.0's bundle) and must not be generalised into a standalone requirement.",
+          "evidence": "proposed",
+          "sources": []
+        }
+      ],
+      "depends_on": []
+    }
+  ],
+  "compatibility_rules": [
+    {
+      "id": "ros2-gazebo-recommended-pairings",
+      "kind": "pairing",
+      "members": [
+        "ros2",
+        "gazebo"
+      ],
+      "rule": "Recommended ros_gz pairings: ROS 2 Jazzy <-> Gazebo Harmonic; ROS 2 Humble <-> Gazebo Fortress; ROS 2 Kilted <-> Gazebo Ionic; ROS 2 Lyrical/Rolling <-> Gazebo Jetty.",
+      "evidence": "verified",
+      "sources": [
+        "https://gazebosim.org/docs/harmonic/ros_installation/"
+      ],
+      "notes": "Gazebo's official recommendation for new users: Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic. Humble<->Harmonic is possible but non-official (needs ros-humble-ros-gzharmonic from OSRF and conflicts with ros-humble-ros-gz* packages)."
+    },
+    {
+      "id": "ros2-jazzy-gazebo-fortress-conflict",
+      "kind": "conflict",
+      "members": [
+        "ros2",
+        "gazebo"
+      ],
+      "rule": "ROS 2 Jazzy is incompatible with Gazebo Fortress, Ionic and Jetty; ROS 2 Humble is incompatible with Gazebo Ionic and Jetty (official pairing table). A machine with Jazzy + Fortress is INCOMPATIBLE for a Jazzy stack even if both tools run.",
+      "evidence": "verified",
+      "sources": [
+        "https://gazebosim.org/docs/harmonic/ros_installation/"
+      ],
+      "notes": "This is the compatibility rule the Phase 1 spec's example conflict (ros2:jazzy vs gazebo:fortress) anticipated; the official table confirms it."
+    },
+    {
+      "id": "ros2-distro-ubuntu-tier1",
+      "kind": "pairing",
+      "members": [
+        "ros2"
+      ],
+      "rule": "ROS 2 distro pairs with one Ubuntu LTS at Tier 1: Jazzy <-> Ubuntu 24.04, Humble <-> Ubuntu 22.04 (REP 2000). Other combinations are Tier 2/3 or unsupported.",
+      "evidence": "verified",
+      "sources": [
+        "https://reps.openrobotics.org/rep-2000/"
+      ],
+      "notes": "Windows 10 (VS2019) is also Tier 1 for both distros; macOS is Tier 3 only."
+    },
+    {
+      "id": "px4-recommended-ros2",
+      "kind": "pairing",
+      "members": [
+        "px4",
+        "ros2"
+      ],
+      "rule": "For PX4 + ROS 2 work, PX4's supported/recommended platform is ROS 2 Jazzy on Ubuntu 24.04; on Ubuntu 22.04 use ROS 2 Humble. ROS 2 apps must use px4_msgs matching the firmware's message definitions (message-versioning translation node exception from PX4 v1.16).",
+      "evidence": "verified",
+      "sources": [
+        "https://docs.px4.io/main/en/ros2/user_guide"
+      ],
+      "notes": "Supersedes older PX4 doc versions that recommended Humble/22.04 as the primary pairing; always check the current (main) PX4 guide."
+    },
+    {
+      "id": "px4-gazebo-simulator",
+      "kind": "pairing",
+      "members": [
+        "px4",
+        "gazebo"
+      ],
+      "rule": "PX4's dev environment installs Gazebo Harmonic by default; on Ubuntu 24.04, Gazebo Harmonic, Ionic and Jetty are supported with PX4. Modern Gazebo supersedes Gazebo Classic from Ubuntu 22.04 onwards.",
+      "evidence": "verified",
+      "sources": [
+        "https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu",
+        "https://docs.px4.io/main/en/sim_gazebo_gz/"
+      ],
+      "notes": "Interaction with the ros_gz pairing rule: if ROS 2 is also in the selection, the ROS pairing table governs which Gazebo belongs (Jazzy -> Harmonic)."
+    },
+    {
+      "id": "docker-desktop-windows-floor",
+      "kind": "floor",
+      "members": [
+        "docker"
+      ],
+      "rule": "Docker Desktop on Windows requires WSL 2.1.5 or later, Windows 10 64-bit 22H2 (build 19045) or Windows 11 64-bit 23H2 (build 22631) or higher, a 64-bit processor with SLAT, hardware virtualisation enabled, and 8 GB system RAM.",
+      "evidence": "verified",
+      "sources": [
+        "https://docs.docker.com/desktop/setup/install/windows-install/"
+      ],
+      "notes": "Docker Desktop is not supported on Windows Server. On Linux, Docker Engine is the native route; Desktop for Linux requires Ubuntu 26.04 or 24.04 LTS (x86-64)."
+    },
+    {
+      "id": "qgc-ubuntu-binary-floor",
+      "kind": "floor",
+      "members": [
+        "qgroundcontrol"
+      ],
+      "rule": "Official QGroundControl AppImages run on Ubuntu 24.04 LTS and 26.04 LTS; on Ubuntu 22.04 QGC must be built from source (Stable V5.1 docs).",
+      "evidence": "verified",
+      "sources": [
+        "https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html"
+      ],
+      "notes": "Matters for stack targeting: a 22.04-based PX4 stack cannot assume a binary QGC install."
+    },
+    {
+      "id": "zephyr-sdk-version-matrix",
+      "kind": "pairing",
+      "members": [
+        "zephyr"
+      ],
+      "rule": "Each Zephyr release has a recommended Zephyr SDK version, listed in the Zephyr SDK Version Compatibility Matrix; the matrix itself was not fetched in this pass, so no specific version pairings are asserted.",
+      "evidence": "proposed",
+      "sources": [],
+      "notes": "The SDK docs page (fetched) defers to the matrix for the full list; fetch it before encoding any SDK-version rule."
+    }
+  ],
+  "stacks": [
+    {
+      "id": "px4-drone-development",
+      "name": "PX4 Drone Development",
+      "targets": [
+        "Ubuntu 24.04 LTS (x86_64, arm64) — primary, ROS 2 Jazzy pairing",
+        "Ubuntu 22.04 LTS — supported with the ROS 2 Humble pairing"
+      ],
+      "system_requirements": {
+        "disk_free_gb_min": 40,
+        "evidence": "proposed",
+        "why": "Floor carried from the Phase 1 spec sketch (the Omega-Ubuntu lesson: ~17 GB free cannot hold this stack); not an official vendor requirement."
+      },
+      "members": [
+        {
+          "tool": "px4",
+          "type": "required",
+          "constraints": "Source checkout built locally; dev environment per PX4 docs for the target Ubuntu.",
+          "why": "The autopilot itself — SITL and firmware builds are the capability this stack exists for."
+        },
+        {
+          "tool": "gazebo",
+          "type": "required",
+          "constraints": "Harmonic with ROS 2 Jazzy on Ubuntu 24.04 (Fortress-era pairings do not apply here); on 22.04 PX4's setup installs Harmonic by default.",
+          "why": "PX4 SITL's current default simulator, installed by PX4's own dev setup; a drone-development stack without its simulator cannot demonstrate flight."
+        },
+        {
+          "tool": "ros2",
+          "type": "required",
+          "constraints": "Jazzy on Ubuntu 24.04 (Humble on 22.04); px4_msgs must match the PX4 firmware's message definitions.",
+          "why": "Required for this stack's ROS 2 integration capability (offboard control, companion-computer apps) — it is a stack requirement, not a PX4 requirement: PX4 alone flies without ROS 2, and a user who deselects ROS 2 keeps a valid PX4+Gazebo SITL selection."
+        },
+        {
+          "tool": "qgroundcontrol",
+          "type": "optional",
+          "constraints": "Binary AppImages need Ubuntu 24.04+; on 22.04 it is build-from-source only.",
+          "why": "Ground-station view, vehicle setup and log review for the SITL vehicle; SITL builds and runs without it."
+        },
+        {
+          "tool": "mavsdk",
+          "type": "optional",
+          "constraints": "Python package (pip) or C++ library; needs Python 3.8+ for the Python form.",
+          "why": "Programmatic/offboard control experiments from Python or C++; a library you add per project, never needed for a basic SITL flight."
+        },
+        {
+          "tool": "docker",
+          "type": "optional",
+          "constraints": "Operational means the daemon answers docker info, not just the CLI existing.",
+          "why": "Alternative container route for PX4/simulator environments; the native dev setup does not need it."
+        },
+        {
+          "tool": "vscode",
+          "type": "optional",
+          "constraints": "",
+          "why": "Editor comfort only — PX4's docs suggest it as a next step; nothing in the stack depends on it."
+        }
+      ]
+    },
+    {
+      "id": "ros-mobile-robot",
+      "name": "ROS Mobile Robot",
+      "targets": [
+        "Ubuntu 24.04 LTS with ROS 2 Jazzy",
+        "Ubuntu 22.04 LTS with ROS 2 Humble"
+      ],
+      "members": [
+        {
+          "tool": "ros2",
+          "type": "required",
+          "constraints": "Distro must pair with the OS: Jazzy on 24.04, Humble on 22.04 (REP 2000 Tier 1).",
+          "why": "The middleware base everything else in this stack is a package of."
+        },
+        {
+          "tool": "nav2",
+          "type": "required",
+          "constraints": "Nav2 build/binary must match the sourced ROS distro (navigation2 + nav2_bringup packages).",
+          "why": "Autonomous navigation — planning, control and localization — is the stack's defining capability."
+        },
+        {
+          "tool": "rviz2",
+          "type": "required",
+          "constraints": "Version locked to the installed ROS distro; arrives via the ROS 2 installation, not a separate installer.",
+          "why": "The standard visualisation/debugging surface for Nav2 (maps, plans, TF); without it the stack is effectively blind."
+        },
+        {
+          "tool": "gazebo",
+          "type": "alternative",
+          "group": "simulator",
+          "constraints": "Must follow the ros_gz pairing for the selected distro (Jazzy->Harmonic, Humble->Fortress).",
+          "why": "One simulator choice for developing against a virtual robot; a hardware-only user can drop the simulator group entirely and keep a valid stack."
+        },
+        {
+          "tool": "docker",
+          "type": "optional",
+          "constraints": "Daemon must be running for Nav2's container route.",
+          "why": "Nav2 publishes pre-built Docker images and dev containers as an alternative install route."
+        },
+        {
+          "tool": "vscode",
+          "type": "optional",
+          "constraints": "",
+          "why": "Editor comfort only."
+        }
+      ]
+    },
+    {
+      "id": "embedded-firmware-lab",
+      "name": "Embedded Firmware Lab",
+      "targets": [
+        "Linux (Ubuntu), macOS, Windows development hosts"
+      ],
+      "members": [
+        {
+          "tool": "platformio",
+          "type": "required",
+          "constraints": "Core (pio) standalone or bundled in the VS Code extension; frameworks are chosen per project in platformio.ini.",
+          "why": "The lab's core: one build/upload/debug front-end across boards and frameworks, so projects — not the workstation — decide Arduino vs ESP-IDF vs vendor SDKs."
+        },
+        {
+          "tool": "esp-idf",
+          "type": "alternative",
+          "group": "esp32-path",
+          "constraints": "Espressif chips only; Python 3.11+ (current) and CMake 3.16+; install via EIM (current) or the legacy ~/esp/esp-idf flow.",
+          "why": "The vendor-native ESP32 path: choose it standalone (EIM/Espressif IDE), or as the framework a PlatformIO project selects — one of the alternative ESP32 development paths, never an add-on forced on Arduino or STM32 work."
+        },
+        {
+          "tool": "arduino-ide",
+          "type": "alternative",
+          "group": "esp32-path",
+          "constraints": "Board support via Board Manager packages; Linux form is an AppImage needing FUSE.",
+          "why": "The beginner-friendly standalone IDE path for Arduino-core boards (including ESP32 cores); an alternative environment to PlatformIO/ESP-IDF, not a dependency of either."
+        },
+        {
+          "tool": "openocd",
+          "type": "optional",
+          "constraints": "Frequently arrives bundled (Zephyr SDK, STM32CubeIDE); a standalone copy is only needed for probe work outside those flows.",
+          "why": "JTAG/SWD debug-probe server for hardware debugging across the lab's frameworks."
+        },
+        {
+          "tool": "zephyr",
+          "type": "optional",
+          "constraints": "Host minimums: CMake 3.28.0, Python 3.12, devicetree compiler 1.4.6; SDK version should follow the Zephyr SDK compatibility matrix (unverified numbers).",
+          "why": "The RTOS path: adds west-managed Zephyr development for supported boards when a project targets Zephyr."
+        },
+        {
+          "tool": "stm32cubeide",
+          "type": "optional",
+          "constraints": "64-bit hosts only; ST's current documents disagree on exact Ubuntu/Fedora versions — pin claims to a CubeIDE release.",
+          "why": "The vendor IDE for STM32 targets; only relevant when the lab works with STM32 hardware."
+        },
+        {
+          "tool": "vscode",
+          "type": "optional",
+          "constraints": "",
+          "why": "Hosts the recommended PlatformIO IDE extension route, but PlatformIO Core works without it."
+        }
+      ]
+    }
+  ]
+}
