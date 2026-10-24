@@ -1,6 +1,8 @@
 import SwiftUI
+import DarkstarCore
 
 struct MissionsView: View {
+    @State private var replayError: String? = nil
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -55,20 +57,36 @@ struct MissionsView: View {
                 Stat(label: "Reassignments", value: "2", note: "after dropout")
                 Stat(label: "Recorded", value: "2026-09-12", note: "PX4 SITL · Gazebo")
             }
-            HStack {
-                Button("Watch the replay") {
-                    if let url = URL(string: "http://localhost:8000/demo/") {
-                        NSWorkspace.shared.open(url)
-                    }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Button("Watch the replay") { openReplay() }
+                    .buttonStyle(.borderedProminent)
+                    Text("Serve the replay from the missions project (web/replay) — or open the Viewer tab.")
+                        .font(.caption).foregroundStyle(.tertiary)
                 }
-                .buttonStyle(.borderedProminent)
-                Text("Serve the replay from the missions project (web/replay) — or open the Viewer tab.")
-                    .font(.caption).foregroundStyle(.tertiary)
+                if let replayError {
+                    Text(replayError)
+                        .font(.callout)
+                        .foregroundStyle(HB.alert)
+                }
             }
         }
         .padding(20)
         .background(HB.panel, in: RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(HB.hairline, lineWidth: 1))
+    }
+
+    private func openReplay() {
+        switch ViewerURLPolicy.validate(ViewerURLPolicy.defaultReplayURLString) {
+        case .success(let url):
+            if NSWorkspace.shared.open(url) {
+                replayError = nil
+            } else {
+                replayError = "macOS could not open the replay in a browser. Start the replay server on this Mac, or use the Viewer tab."
+            }
+        case .failure(let error):
+            replayError = error.displayMessage
+        }
     }
 
     private func miniCard(title: String, icon: String, bodyText: String) -> some View {

@@ -66,6 +66,21 @@ struct DashboardView: View {
                 Button("SSH") { runtime.openSSHTerminal() }
             }
             .padding(.top, 4)
+            if let error = runtime.lastActionError {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(error.userMessage)
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(HB.alert)
+                    if let recovery = error.recoverySuggestion {
+                        Text(recovery)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    Button("Dismiss") { runtime.clearActionError() }
+                        .controlSize(.small)
+                }
+                .padding(.top, 6)
+            }
         }
     }
 

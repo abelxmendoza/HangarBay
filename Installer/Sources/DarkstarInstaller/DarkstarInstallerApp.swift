@@ -32,7 +32,7 @@ final class InstallerModel: ObservableObject {
     @Published var existingVersion: String? = nil
     @Published var alsoInUserApplications = false
 
-    let newVersion = "0.3.0"
+    let newVersion = "0.4.0"
     private let appName = "Darkstar Robotics.app"
     private var systemDest: URL { URL(fileURLWithPath: "/Applications").appendingPathComponent(appName) }
     private var userDest: URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").appendingPathComponent(appName) }
@@ -64,24 +64,83 @@ final class InstallerModel: ObservableObject {
                     await MainActor.run { self.phase = .failed("Installer payload is missing from this installer build. Nothing was installed.") }
                     return
                 }
-                await MainActor.run { self.phase = .working("Copying Darkstar Robotics to /Applications\u{2026}") }
-                if fm.fileExists(atPath: self.systemDest.path) {
-                    try fm.removeItem(at: self.systemDest)
+
+                // Validate before touching any existing installation. A bad
+                // or mismatched payload must never replace a working app.
+                let payloadVersion = self.version(at: payload)
+                guard payloadVersion == self.newVersion else {
+                    await MainActor.run {
+                        self.phase = .failed("Installer payload is version \(payloadVersion ?? "unknown"), not \(self.newVersion). Nothing was installed.")
+                    }
+                    return
                 }
-                try fm.copyItem(at: payload, to: self.systemDest)
+
+                await MainActor.run { self.phase = .working("Copying Darkstar Robotics to /Applications\u{2026}") }
+
+                // Stage beside the destination, validate the staged bundle,
+                // then swap. The previous app is restored if the swap fails.
+                let staging = self.systemDest.deletingLastPathComponent()
+                    .appendingPathComponent("Darkstar Robotics Staging \(UUID().uuidString).app")
+                let backup = self.systemDest.deletingLastPathComponent()
+                    .appendingPathComponent("Darkstar Robotics Backup \(UUID().uuidString).app")
+                defer {
+                    try? fm.removeItem(at: staging)
+                    try? fm.removeItem(at: backup)
+                }
+
+                try fm.copyItem(at: payload, to: staging)
+                guard self.version(at: staging) == self.newVersion else {
+                    throw NSError(domain: "DarkstarInstaller", code: 2, userInfo: [
+                        NSLocalizedDescriptionKey: "The copied app failed validation and was not installed."
+                    ])
+                }
+
+                var movedExisting = false
+                if fm.fileExists(atPath: self.systemDest.path) {
+                    try fm.moveItem(at: self.systemDest, to: backup)
+                    movedExisting = true
+                }
+                do {
+                    try fm.moveItem(at: staging, to: self.systemDest)
+                } catch {
+                    if movedExisting {
+                        try? fm.moveItem(at: backup, to: self.systemDest)
+                    }
+                    throw error
+                }
+
+                guard self.version(at: self.systemDest) == self.newVersion else {
+                    if fm.fileExists(atPath: self.systemDest.path) {
+                        try? fm.removeItem(at: self.systemDest)
+                    }
+                    if movedExisting {
+                        try? fm.moveItem(at: backup, to: self.systemDest)
+                    }
+                    throw NSError(domain: "DarkstarInstaller", code: 3, userInfo: [
+                        NSLocalizedDescriptionKey: "The installed app failed post-install validation. The previous installation was restored when possible."
+                    ])
+                }
+
                 await MainActor.run {
                     self.refreshExisting()
                     self.phase = .installed
                 }
             } catch {
-                await MainActor.run { self.phase = .failed("Install failed: \(error.localizedDescription)") }
+                await MainActor.run { self.phase = .failed("Install failed: \(error.localizedDescription) Your previous installation was left in place when possible.") }
             }
         }
     }
 
     func openApp() {
-        let target = FileManager.default.fileExists(atPath: systemDest.path) ? systemDest : userDest
-        NSWorkspace.shared.open(target)
+        let fm = FileManager.default
+        let target = fm.fileExists(atPath: systemDest.path) ? systemDest : userDest
+        guard fm.fileExists(atPath: target.path) else {
+            phase = .failed("Darkstar Robotics is not installed yet, so there is nothing to open.")
+            return
+        }
+        if !NSWorkspace.shared.open(target) {
+            phase = .failed("macOS could not open Darkstar Robotics from \(target.path). Try opening it from Finder.")
+        }
     }
 }
 

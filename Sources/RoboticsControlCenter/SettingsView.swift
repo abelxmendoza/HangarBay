@@ -37,7 +37,7 @@ struct SettingsView: View {
             }
             Section("About") {
                 LabeledContent("App", value: "Darkstar Robotics")
-                LabeledContent("Version", value: "0.3.0")
+                LabeledContent("Version", value: "0.4.0")
                 Text("One friendly place on your Mac for robotics development: pick a validated environment, pass preflight, fly in simulation, verify the evidence, then go to real hardware. The Linux runtime underneath is managed for you.")
                     .font(.callout).foregroundStyle(.secondary)
             }

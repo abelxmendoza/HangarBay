@@ -1,10 +1,5 @@
 import Foundation
-
-struct GitHubRelease: Decodable {
-    let tag_name: String
-    let html_url: String
-    let name: String?
-}
+import DarkstarCore
 
 enum UpdateState: Equatable {
     case notChecked
@@ -17,53 +12,61 @@ enum UpdateState: Equatable {
 /// Honest, on-demand update check against GitHub Releases.
 /// No background polling: a check runs only when the user presses the button,
 /// and the UI reports exactly what the check found — including failure.
+///
+/// All response classification lives in DarkstarCore's `UpdateEvaluator`, so
+/// the network, HTTP, decoding, no-release, and version-comparison branches
+/// are unit-tested without touching GitHub.
 final class UpdateChecker: ObservableObject {
     @Published var state: UpdateState = .notChecked
-    static let currentVersion = "0.3.0"
+    static let currentVersion = "0.4.0"
     private let endpoint = URL(string: "https://api.github.com/repos/abelxmendoza/HangarBay/releases/latest")!
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
 
     func check() {
         state = .checking
-        var req = URLRequest(url: endpoint)
-        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        URLSession.shared.dataTask(with: req) { [weak self] data, response, error in
+        var request = URLRequest(url: endpoint)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        session.dataTask(with: request) { [weak self] data, response, error in
+            let evaluation = UpdateEvaluator.evaluate(
+                statusCode: (response as? HTTPURLResponse)?.statusCode,
+                data: data,
+                networkErrorDescription: error?.localizedDescription,
+                currentVersion: Self.currentVersion
+            )
             DispatchQueue.main.async {
                 guard let self else { return }
-                if let error {
-                    self.state = .failed("Check failed: \(error.localizedDescription)")
-                    return
-                }
-                guard let http = response as? HTTPURLResponse else {
-                    self.state = .failed("Check failed: no response from GitHub.")
-                    return
-                }
-                if http.statusCode == 404 {
-                    self.state = .failed("No published releases yet — nothing to compare against.")
-                    return
-                }
-                guard http.statusCode == 200, let data,
-                      let rel = try? JSONDecoder().decode(GitHubRelease.self, from: data) else {
-                    self.state = .failed("Check failed: unexpected response (\(http.statusCode)).")
-                    return
-                }
-                let latest = rel.tag_name.hasPrefix("v") ? String(rel.tag_name.dropFirst()) : rel.tag_name
-                if Self.isNewer(latest, than: Self.currentVersion), let url = URL(string: rel.html_url) {
-                    self.state = .updateAvailable(version: latest, url: url)
-                } else {
+                switch evaluation {
+                case .upToDate(let latest):
                     self.state = .upToDate(latest)
+                case .updateAvailable(let version, let url):
+                    self.state = .updateAvailable(version: version, url: url)
+                case .noReleases:
+                    self.state = .failed("No published releases yet — nothing to compare against.")
+                case .failed(let darkstarError):
+                    self.state = .failed(Self.message(for: darkstarError))
                 }
             }
         }.resume()
     }
 
-    static func isNewer(_ a: String, than b: String) -> Bool {
-        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
-        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
-        for i in 0..<max(pa.count, pb.count) {
-            let x = i < pa.count ? pa[i] : 0
-            let y = i < pb.count ? pb[i] : 0
-            if x != y { return x > y }
+    private static func message(for error: DarkstarError) -> String {
+        switch error {
+        case .network(let reason):
+            return reason.hasPrefix("Check failed:") ? reason : "Check failed: \(reason)"
+        case .httpStatus(let statusCode, _):
+            return "Check failed: unexpected response (\(statusCode))."
+        case .decoding:
+            return "Check failed: GitHub returned a response Darkstar could not read."
+        default:
+            return "Check failed: \(error.userMessage)"
         }
-        return false
+    }
+
+    static func isNewer(_ candidate: String, than current: String) -> Bool {
+        SemanticVersion.isNewer(candidate, than: current)
     }
 }

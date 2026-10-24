@@ -46,6 +46,17 @@ for now).
 
 ## Status
 
+v0.4 — Error handling + test suite, 2026-10-24. New DarkstarCore
+library: typed errors with plain-language messages and recovery
+suggestions for every failure the app can hit (missing utmctl, failed
+probes, blocked cleartext replay URLs, update-check failures), surfaced
+in the UI instead of silently swallowed. 52 automated tests (unit,
+integration, end-to-end) verified on macOS and Linux toolchains. The
+installer now validates its payload version, stages the install, and
+rolls back on failure. Release packaging: bundles are ad-hoc
+code-signed and zipped with ditto on a Mac so downloads open with the
+standard unsigned-build prompt. App icon baked into the bundle.
+
 v0.3 — Darkstar Robotics rebrand, 2026-10-23. New user-supplied star
 emblem logo; palette retuned to the rebrand system (Starfire #FF4A2F
 primary, Ember #FF785A, Signal Cyan #00CFFF instrumentation, System
