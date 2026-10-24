@@ -94,3 +94,35 @@ Rules:
 - **Default Mac viewer:** Foxglove (topic-centric, bridge needed in guest) vs Gazebo GUI on the Mac (joins the gz session natively). Design supports both; a default keeps the first proof simple.
 - **PX4 SITL default side:** Mac (lighter, no VM needed for logic tests) vs VM (matches the verified stack exactly). Design default: Mac for SIH/logic, VM whenever Gazebo or ROS is in the loop.
 - **Guest desktop:** keep the (fixed) Xorg desktop as a diagnostic fallback, or strip the guest to purely headless once the remote flows are proven? Revisit after step 2.
+
+## 9. Resource awareness & management (added 2026-10-24, Abel approved)
+
+The split only helps if users can *see* it working. A 16 GB host running an 8 GB VM, a browser, AI desktop apps, and an IDE oversubscribes memory — and macOS pays for the overflow in compression CPU, which users feel as "everything is slow" with no visible cause. Darkstar's job is to make resource state knowable and manageable without turning the user into a system administrator. Three verbs: **know, show, manage.**
+
+### Know — measure both sides
+
+- **Host probes (Mac side):** total RAM, memory used, memory pressure, compressed memory, swap, free disk, and the top memory consumers *by name*. (macOS exposes all of this; the current Preflight already reads host RAM/disk — this extends the same probe set.) Design reference point, measured live on the reference machine (M1 Pro, 16 GB): 13.3 GB used, 6.0 GB compressed with the VM + browser + AI apps up — pressure is a real, measurable state, not a vibe.
+- **Guest probes (VM side):** over the same SSH channel the auditor uses — guest RAM free/total, CPU load, disk free. Guest state is part of the workstation picture only when freshly measured; otherwise it is UNKNOWN (§1, principle 5).
+- **Stack cost cards:** every catalog stack carries resource requirements per side (extending the catalog's existing `system_requirements` seed, e.g. the PX4 stack's disk floor): VM RAM/cores, Mac-side RAM for viewers/tools, disk per side. Costs are data in the catalog, verified the same way as compatibility claims — vendor-documented where a vendor states them, marked as our operational estimate where they don't.
+
+### Show — one picture, one verdict
+
+- **Headroom bar** on the Dashboard: total RAM → VM reservation → measured free, with the selected stack's cost overlaid.
+- **One verdict word per stack: FITS / TIGHT / WON'T FIT**, computed from measured headroom vs. the stack's cost card. This is a *presentation verdict over measurements*, deliberately separate from the Phase 1 status taxonomy (READY / MISCONFIGURED / …) — the two must never be conflated, the same way the three existing taxonomies stay separate.
+- **The blocker is named in one sentence** when the verdict isn't FITS: "Tight — Firefox is using 3.1 GB" or "Won't fit — the runtime needs 8 GB and 5.2 GB is free." No raw metric is shown without its verdict; no verdict is shown without its evidence timestamp.
+
+### Manage — modes, not settings
+
+- **Workflow buttons own the sequence:** "Start PX4 Lab" = check headroom → start VM → wait until ready is *observed* → launch headless sim → open the Mac-side viewer. "Stop" reverses it and releases the VM's reservation. The user picks *what*; Darkstar owns *where* and *whether it fits*.
+- **Focus presets** for the known contention patterns: **VM Build** (runtime up; suggests freeing memory from local AI), **Local AI** (VM suspended, its memory actually released to the host), **Mac Only** (runtime off). Presets change Darkstar-managed state only.
+- **Hard rule: Darkstar never kills or suspends the user's own apps.** It names heavy consumers and offers one-tap quit *suggestions*; the decision is always the user's. (Same doctrine as dependencies: explained and approved, never silent.)
+- **Guardrails:** starting a VM-side workflow under high measured pressure warns first, with the named blocker; ending a workflow offers suspend (fast resume) vs. stop (full release); two hypervisors or Docker Desktop detected alongside the runtime is surfaced as a factual conflict, in the catalog's conflict style — not a scolding.
+
+### Simplicity rules (binding on the UI)
+
+1. The user thinks in "can I run this now?" — every surface answers that question first.
+2. One number, one word, one sentence: headroom figure, verdict, blocker. Depth lives one click down (Preflight/audit detail), never on the Dashboard.
+3. Nothing about resources is ever a settings page of dials. If a choice matters, it is a preset or a workflow button.
+4. Estimates are labeled as estimates; measurements carry timestamps; anything unmeasured is UNKNOWN.
+
+**Sequencing:** host pressure probes + headroom bar land with Build Sequence step 3 (placement in the Library UI); stack cost cards land with the catalog's next revision; focus presets land with step 4 (lifecycle polish). The guest-side probes ride the step-1 remote auditor session — one more reason that session is the first proof.
