@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+<defs>
+<radialGradient id="halo"><stop stop-color="#1F2937"/><stop offset="1" stop-color="#0A0F14"/></radialGradient>
+<pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M120 0H0V120" fill="none" stroke="#8A97A8" stroke-opacity=".05"/></pattern>
+</defs>
+<path fill="#0A0F14" d="M0 0h3840v2160H0z"/>
+<ellipse cx="1920" cy="950" rx="1500" ry="1000" fill="url(#halo)"/>
+<path fill="url(#grid)" d="M0 0h3840v2160H0z"/>
+<g transform="translate(1920 870)">
+<circle r="290" fill="none" stroke="#00CFFF" stroke-opacity=".25" stroke-width="2" stroke-dasharray="180 32 4 32"/>
+<ellipse rx="355" ry="100" transform="rotate(-28)" fill="none" stroke="#FF785A" stroke-opacity=".6" stroke-width="3"/>
+<path d="M0-220 44-44 220 0 44 44 0 220-44 44-220 0-44-44Z" fill="#FF4A2F"/>
+<circle r="12" fill="#E8EAF0"/>
+</g>
+<g text-anchor="middle" font-family="DejaVu Sans, sans-serif">
+<text x="1920" y="1330" font-size="68" letter-spacing="16" fill="#E8EAF0">DARKSTAR ROBOTICS</text>
+<text x="1920" y="1420" font-size="30" letter-spacing="10" fill="#00CFFF">OMEGA-UBUNTU / DEVELOPMENT RUNTIME</text>
+<text x="1920" y="1530" font-size="24" letter-spacing="9" fill="#8A97A8">BUILD · EXPLORE · DEPLOY</text>
+</g></svg>
