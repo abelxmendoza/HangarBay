@@ -8,6 +8,9 @@ let package = Package(
         .executable(name: "RoboticsControlCenter", targets: ["RoboticsControlCenter"])
     ],
     targets: [
-        .executableTarget(name: "RoboticsControlCenter")
+        .executableTarget(
+            name: "RoboticsControlCenter",
+            resources: [.process("hangar-bay-logo.png")]
+        )
     ]
 )

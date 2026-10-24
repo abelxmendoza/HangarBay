@@ -28,6 +28,8 @@ struct DashboardView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
+            BrandLogo(height: 200, cornerRadius: 18)
+                .padding(.bottom, 4)
             Eyebrow("COMMAND DECK / 01")
             Text("Fleet Overview")
                 .font(.largeTitle.bold())

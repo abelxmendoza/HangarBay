@@ -66,6 +66,8 @@ struct ContentView: View {
 
     private var brandHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
+            BrandLogo(height: 54, cornerRadius: 10)
+                .padding(.bottom, 4)
             Text("HANGAR BAY")
                 .font(.system(.title3, design: .default).weight(.heavy))
                 .tracking(2.4)

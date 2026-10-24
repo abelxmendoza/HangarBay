@@ -74,6 +74,26 @@ struct EvidenceChip: View {
     }
 }
 
+/// The Hangar Bay mark (user-supplied brand art, bundled as a resource).
+/// Shown in the sidebar brand block and big on the Dashboard landing.
+struct BrandLogo: View {
+    var height: CGFloat = 56
+    var cornerRadius: CGFloat = 12
+
+    var body: some View {
+        if let url = Bundle.module.url(forResource: "hangar-bay-logo", withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(height: height)
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(HB.hairline, lineWidth: 1))
+                .accessibilityLabel("Hangar Bay logo")
+        }
+    }
+}
+
 /// Condensed uppercase section eyebrow, e.g. "COMMAND DECK / 01".
 struct Eyebrow: View {
     let text: String

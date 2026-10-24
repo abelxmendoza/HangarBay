@@ -1,5 +1,9 @@
 # Hangar Bay
 
+<p align="center">
+  <img src="docs/logo.png" alt="Hangar Bay — robotics for every platform" width="320">
+</p>
+
 *Every robot you own, ready to fly.*
 
 A native macOS app (Swift + SwiftUI) — a robotics control center that
