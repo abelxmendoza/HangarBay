@@ -36,6 +36,37 @@ The version lives in `VERSION`. When you bump it, also bump `newVersion` in
 Conda: your shell starts in conda `base`. Every script resets PATH to Apple's
 toolchain first, so conda's clang/ld never leak into Swift builds.
 
+## Fly PX4 in simulation
+
+With the runtime provisioned (`bash dev.sh runtime`) and running:
+
+```
+bash dev.sh sim start     # XRCE agent + PX4 SITL (Gazebo Harmonic, x500, headless) + foxglove_bridge
+bash dev.sh sim status    # topics, vehicle altitude/arming, viewer URLs
+bash dev.sh sim fly       # arm, take off to ~2.5 m, hover, land
+bash dev.sh sim stop      # shut PX4 down and stop everything
+```
+
+- Everything runs in the VM's tmux session `darkstar` (`ssh ryuk@<vm>` then
+  `tmux attach -t darkstar`; windows `xrce`, `px4` (the `pxh>` shell),
+  `foxglove`). Logs: `/tmp/darkstar-{xrce,px4,foxglove}.log` in the VM.
+- **QGroundControl** (on the Mac): `sim start` streams MAVLink to UDP 14550
+  on this Mac and opens QGC, which auto-connects. When the VM runs on this
+  Mac it uses UTM's local bridge (`192.168.64.1`), not Tailscale: between a
+  Mac and its own VM Tailscale often falls back to a DERP relay (~50 ms vs
+  ~1–6 ms), and when that relay hiccuped mid-hover the lost GCS link made
+  PX4 failsafe (hold → return → land). `DARKSTAR_GCS_IP` overrides. The first
+  launch shows setup dialogs and may ask to *find devices on your local
+  network* — allow it, or QGC never opens its UDP link. PX4 refuses to arm
+  until a ground station is connected ("Preflight Fail: No connection to the
+  ground control station"), so connect QGC before `sim fly`.
+- **Foxglove** (on the Mac): Open connection → Foxglove WebSocket →
+  `ws://<vm-local-ip>:8765` (e.g. `ws://192.168.64.15:8765`; `ip -4 addr` in
+  the VM) or the VM's Tailscale IP from another machine. PX4's topics are under `/fmu/out/*`
+  (e.g. `/fmu/out/vehicle_local_position`; z is NED, negative is up).
+- ROS 2 in the VM: `source /opt/ros/jazzy/setup.bash && source ~/darkstar_ws/install/setup.bash`,
+  then `ros2 topic list | grep fmu`.
+
 ## Restarting the runtime VM
 
 Use **Power Off, then Start** — not Reboot. Warm reboots of the arm64 Ubuntu

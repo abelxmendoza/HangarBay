@@ -17,6 +17,7 @@ case "$task" in
   doctor)    bash Scripts/doctor.sh ;;
   toolchain) bash Scripts/toolchain-mac.sh ;;
   runtime)   bash Scripts/runtime.sh ;;
+  sim)       bash Scripts/sim.sh "$@" ;;
   cli)       swift run darkstar "$@" ;;
   clean)     swift package clean ;;
   help|*)
@@ -31,6 +32,7 @@ Darkstar Robotics $DARKSTAR_VERSION — bash dev.sh <task>
   toolchain  Homebrew: UTM, Tailscale, QGroundControl, Foxglove, cmake, ninja, python, node
              (UPGRADE_UTM=1 bash dev.sh toolchain  replaces the old UTM that lacks utmctl)
   runtime    provision ROS 2 Jazzy + Gazebo Harmonic + PX4 SITL inside the VM
+  sim        PX4 SITL demo in the VM: start | status | fly | stop (QGC + Foxglove on the Mac)
   cli vm     run the darkstar CLI (status | vm | version)
 HELP
     ;;
