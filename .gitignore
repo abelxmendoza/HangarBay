@@ -1,3 +1,6 @@
 .build/
 .swiftpm/
 .DS_Store
+# Installer payload is staged by Scripts/package.sh at build time
+Installer/Sources/DarkstarInstaller/Payload/*
+!Installer/Sources/DarkstarInstaller/Payload/README.md

@@ -13,7 +13,7 @@ export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:
 
 DARKSTAR_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DARKSTAR_PROJECTS="$(cd "$DARKSTAR_SRC/.." && pwd)"
-DARKSTAR_INSTALLER_SRC="$DARKSTAR_PROJECTS/DarkstarInstaller"
+DARKSTAR_INSTALLER_SRC="$DARKSTAR_SRC/Installer"   # in this repo; package.sh stages its Payload
 DARKSTAR_DIST="$DARKSTAR_PROJECTS/DarkstarRobotics-Dist"
 DARKSTAR_VERSION="$(tr -d '[:space:]' < "$DARKSTAR_SRC/VERSION")"
 DARKSTAR_APP_NAME="Darkstar Robotics"
