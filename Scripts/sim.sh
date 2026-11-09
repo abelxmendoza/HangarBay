@@ -115,6 +115,9 @@ fly() {
   else
     c_fail "Didn't climb (lowest z=$peak). If PX4 says 'No connection to the ground', connect QGroundControl first."
     vm "tmux capture-pane -p -t $SESSION:px4 -S -20 | grep -E 'WARN|ERROR|Fail' | tail -5" || true
+    # Takeoff was sent, so never leave a possibly-armed vehicle behind.
+    c_step "Landing anyway"
+    pxh "commander land" || true
     exit 1
   fi
   read -r z arming <<<"$(vehicle_state)"
@@ -130,7 +133,8 @@ fly() {
     read -r z arming <<<"$(vehicle_state)"
     [[ "$arming" == "1" ]] && { c_ok "Landed and disarmed (z=$z m)"; return 0; }
   done
-  c_warn "Still armed after 40 s (z=$z) — check QGroundControl"
+  c_fail "Still armed after 40 s (z=$z) — check QGroundControl"
+  exit 1
 }
 
 stop() {
