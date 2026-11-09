@@ -37,6 +37,12 @@ default LVM layout assigns only half the drive to `/` — the provisioner
 offers to claim the rest (online, keeps data; `DARKSTAR_YES=1` to accept),
 and `bash dev.sh doctor` prints the one-line fix when space is low.
 
+**Restarting the runtime:** use Power Off, then Start — not Reboot. Warm
+reboots of the arm64 guest under UTM can hang at "Exiting boot services";
+the Dashboard flags a VM that UTM calls running but that hasn't answered
+SSH for 2 minutes and offers **Force restart**. Golden images ship with a
+3-second boot menu so you can always pick the previous kernel.
+
 ## Why I built it
 
 Darkstar Robotics started with two things I care about: robotics and the experience of using a MacBook.

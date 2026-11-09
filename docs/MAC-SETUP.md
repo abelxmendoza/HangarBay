@@ -32,6 +32,24 @@ The version lives in `VERSION`. When you bump it, also bump `newVersion` in
 Conda: your shell starts in conda `base`. Every script resets PATH to Apple's
 toolchain first, so conda's clang/ld never leak into Swift builds.
 
+## Restarting the runtime VM
+
+Use **Power Off, then Start** — not Reboot. Warm reboots of the arm64 Ubuntu
+guest under UTM on Apple silicon occasionally hang right after
+`EFI stub: Exiting boot services...` with every vCPU spinning, while UTM
+still says "started". A cold start of the same kernel boots normally.
+
+- Stop/Start from the Darkstar Dashboard, from UTM, or Ubuntu's *Power Off*.
+- If a boot does hang, the Dashboard notices: UTM says running but SSH
+  hasn't answered for 2 minutes → the runtime card shows **Not responding**
+  with a **Force restart** button (power off + start). Darkstar never does
+  this on its own. If Tailscale is down on the Mac it says it can't check,
+  instead of guessing.
+- The runtime's boot menu shows for 3 seconds (`bash dev.sh runtime` sets
+  this, and golden images ship with it). If a new kernel won't boot, open
+  the Console, choose *Advanced options for Ubuntu*, and pick the previous
+  kernel.
+
 ## The toolchain
 
 The robotics stack is split the way the app is designed:
