@@ -4,7 +4,10 @@ import DarkstarCore
 struct DashboardView: View {
     @EnvironmentObject private var runtime: RuntimeController
 
+    /// Powered on, per UTM. Drives memory headroom and Start/Stop.
     private var runtimeRunning: Bool { runtime.vmState == "Running" }
+    /// Powered on and answering — the only state that earns a LIVE chip.
+    private var runtimeLive: Bool { runtimeRunning && runtime.vmStatusLabel == "Running" }
 
     var body: some View {
         ScrollView {
@@ -39,10 +42,10 @@ struct DashboardView: View {
             Text("BUILD • EXPLORE • DEPLOY · \(runtime.hostSummary)")
                 .foregroundStyle(.secondary)
             HStack(spacing: 8) {
-                if runtimeRunning {
+                if runtimeLive {
                     EvidenceChip(.live, label: "RUNTIME · LIVE")
                 } else {
-                    EvidenceChip(.unknown, label: "RUNTIME · \(runtime.vmState.uppercased())")
+                    EvidenceChip(.unknown, label: "RUNTIME · \(runtime.vmStatusLabel.uppercased())")
                 }
                 EvidenceChip(.recorded, label: "GOLDEN DEMO · PASS")
                 EvidenceChip(.demo, label: "FLEET · SAMPLE")
@@ -53,9 +56,9 @@ struct DashboardView: View {
 
     private var runtimeCard: some View {
         Card(title: "Linux Runtime", icon: "server.rack",
-             chip: runtimeRunning ? EvidenceChip(.live) : EvidenceChip(.unknown, label: runtime.vmState.uppercased())) {
+             chip: runtimeLive ? EvidenceChip(.live) : EvidenceChip(.unknown, label: runtime.vmStatusLabel.uppercased())) {
             LabeledContent("Virtual machine", value: runtime.vmName)
-            LabeledContent("State", value: runtime.vmState)
+            LabeledContent("State", value: runtime.vmStatusLabel)
             if let message = runtime.runtimeHealth.userMessage {
                 Text(message)
                     .font(.callout.weight(runtime.runtimeHealth.isUnresponsive ? .semibold : .regular))
@@ -70,7 +73,7 @@ struct DashboardView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(HB.signal)
                         .disabled(runtime.isForceRestarting)
-                } else if runtimeRunning || runtime.vmState == "Starting up" {
+                } else if runtimeRunning {
                     Button("Stop") { runtime.stopVM() }
                 } else {
                     Button("Start") { runtime.startVM() }

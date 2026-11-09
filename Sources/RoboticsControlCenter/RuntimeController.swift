@@ -24,7 +24,12 @@ struct PreflightCheck: Identifiable {
 /// `DarkstarError` that occurred, so the UI can explain *why* something is
 /// unavailable instead of collapsing every failure into "not available".
 final class RuntimeController: ObservableObject {
+    /// UTM's power state ("Running", "Stopped", ...). Logic that asks
+    /// "is the VM powered on?" (memory headroom, Launch/Stop buttons) reads this.
     @Published var vmState: String = "Unknown"
+    /// What to show the user: the power state, refined by guest health
+    /// ("Starting up" / "Not responding" while powered on). Display only.
+    @Published private(set) var vmStatusLabel: String = "Unknown"
     @Published var tailscaleState: String = "Unknown"
     @Published var checks: [PreflightCheck] = []
     @Published var lastChecked: Date? = nil
@@ -81,7 +86,8 @@ final class RuntimeController: ObservableObject {
             DispatchQueue.main.async {
                 let health = self.bootWatchdog.update(vmStatus: vm, ssh: ssh, now: Date())
                 self.runtimeHealth = health
-                self.vmState = health.stateLabel ?? vm.legacyState
+                self.vmState = vm.legacyState
+                self.vmStatusLabel = health.stateLabel ?? vm.legacyState
                 self.tailscaleState = tailscale.legacyState
                 self.checks = built
                 self.lastChecked = Date()
