@@ -56,6 +56,9 @@ final class RuntimeController: ObservableObject {
     private var stackResult: RuntimeStackProbeResult?
     private var lastStackProbeAt: Date?
     private var stackProbeInFlight = false
+    /// Bumped whenever the runtime stops answering, so a probe started
+    /// before an outage or restart can't repopulate the report afterwards.
+    private var stackProbeGeneration = 0
     @Published private(set) var lastStackProbeDate: Date? = nil
 
     private var timer: Timer?
@@ -109,6 +112,11 @@ final class RuntimeController: ObservableObject {
                     // Re-probe as soon as the runtime answers again; a report
                     // from before a restart must not stand in for now.
                     self.lastStackProbeAt = nil
+                    if self.stackResult != nil || self.stackProbeInFlight {
+                        self.stackResult = nil
+                        self.stackProbeInFlight = false
+                        self.stackProbeGeneration += 1
+                    }
                 }
                 self.publishChecks()
                 self.probeStackIfDue(force: forceStackProbe)
@@ -134,6 +142,7 @@ final class RuntimeController: ObservableObject {
                                                     now: now, force: force, inFlight: stackProbeInFlight) else { return }
         stackProbeInFlight = true
         lastStackProbeAt = now
+        let generation = stackProbeGeneration
         let config = CLIConfig(user: sshUser, host: sshHost, connectTimeoutSeconds: 5)
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let result: RuntimeStackProbeResult
@@ -145,7 +154,8 @@ final class RuntimeController: ObservableObject {
                 result = .failed(.unknown(error.localizedDescription), at: Date())
             }
             DispatchQueue.main.async {
-                guard let self else { return }
+                // A probe from before the runtime went away is stale.
+                guard let self, generation == self.stackProbeGeneration else { return }
                 self.stackProbeInFlight = false
                 self.stackResult = result
                 self.lastStackProbeDate = Date()
