@@ -636,6 +636,21 @@ public enum PreflightRules {
         return .fail
     }
 
+    /// Free space on the runtime VM's root filesystem. A full install
+    /// (ROS 2 desktop + Gazebo + PX4 SITL build + workspace) takes ~15 GB,
+    /// and day-to-day work (rebuilds, Gazebo models, ros2 bags) needs room
+    /// on top of that. Ubuntu's default LVM layout gives root only half the
+    /// virtual disk, so a "64 GB" VM often has far less than users expect.
+    public static let runtimeVMDiskPassGB = 25.0
+    public static let runtimeVMDiskWarnGB = 15.0
+
+    public static func runtimeVMDiskStatus(freeGB: Double?) -> PreflightRuleStatus {
+        guard let freeGB, freeGB >= 0 else { return .unknown }
+        if freeGB >= runtimeVMDiskPassGB { return .pass }
+        if freeGB >= runtimeVMDiskWarnGB { return .warn }
+        return .fail
+    }
+
     public static func vmStatus(_ status: VMStatus) -> PreflightRuleStatus {
         switch status {
         case .running: return .pass

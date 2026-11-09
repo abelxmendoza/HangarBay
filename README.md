@@ -30,6 +30,13 @@ The Linux side runs in a managed runtime under the hood (the Omega-Ubuntu
 UTM VM is the working prototype, built and tuned Oct 2026). The user never
 touches a terminal, an apt lock, or a version matrix.
 
+**Runtime VM disk:** give the Ubuntu 24.04 VM a 64 GB drive. The full
+install (ROS 2 desktop, Gazebo, PX4 SITL build, workspace) takes ~15 GB;
+`bash dev.sh runtime` wants ~25 GB free before a fresh install. Ubuntu's
+default LVM layout assigns only half the drive to `/` — the provisioner
+offers to claim the rest (online, keeps data; `DARKSTAR_YES=1` to accept),
+and `bash dev.sh doctor` prints the one-line fix when space is low.
+
 ## Why I built it
 
 Darkstar Robotics started with two things I care about: robotics and the experience of using a MacBook.

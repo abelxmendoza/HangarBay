@@ -28,6 +28,10 @@ final class RuntimeController: ObservableObject {
     @Published var tailscaleState: String = "Unknown"
     @Published var checks: [PreflightCheck] = []
     @Published var lastChecked: Date? = nil
+    @Published var memory: MemorySnapshot? = nil
+    @Published var topProcesses: [TopProcess] = []
+    @Published var vmReservationBytes: Int64? = nil
+    @Published var quittableAppNames: Set<String> = []
     @Published private(set) var lastActionError: DarkstarError? = nil
 
     private var timer: Timer?
@@ -62,11 +66,18 @@ final class RuntimeController: ObservableObject {
             let vm = Self.vmStatus(named: name)
             let tailscale = Self.tailscaleStatus()
             let built = Self.buildChecks(vmName: name, vmStatus: vm, tailscaleStatus: tailscale)
+            let mem = Self.memoryProbe.snapshot(totalBytes: Int64(ProcessInfo.processInfo.physicalMemory))
+            let top = Self.memoryProbe.topProcesses(limit: 5)
+            let reservation = Self.vmReservationBytes(named: name)
             DispatchQueue.main.async {
                 self.vmState = vm.legacyState
                 self.tailscaleState = tailscale.legacyState
                 self.checks = built
                 self.lastChecked = Date()
+                self.memory = mem
+                self.topProcesses = top
+                self.vmReservationBytes = reservation
+                self.quittableAppNames = Set(NSWorkspace.shared.runningApplications.compactMap { $0.localizedName })
             }
         }
     }
@@ -146,9 +157,39 @@ final class RuntimeController: ObservableObject {
         lastActionError = nil
     }
 
+    /// User-initiated quit from the Resources card. A regular terminate —
+    /// the app can still prompt to save work — and Darkstar never calls
+    /// this on its own (design §9: name heavy apps, let the user decide).
+    func quitApp(named name: String) {
+        for app in NSWorkspace.shared.runningApplications where app.localizedName == name {
+            app.terminate()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.refresh()
+        }
+    }
+
     // MARK: - Probes
 
     private static let probe = RuntimeProbe(runner: ProcessCommandRunner())
+    private static let memoryProbe = MemoryProbe(runner: ProcessCommandRunner())
+
+    /// The runtime's configured memory reservation, read from its UTM
+    /// bundle. Unknown (nil) when the bundle can't be found or parsed —
+    /// the headroom verdict then falls back to pressure alone.
+    private static func vmReservationBytes(named name: String) -> Int64? {
+        let candidates = [
+            "\(NSHomeDirectory())/Library/Containers/com.utmapp.UTM/Data/Documents/\(name).utm/config.plist",
+            "\(NSHomeDirectory())/Library/Group Containers/WDNLXAD4W8.com.utmapp.UTM/Documents/\(name).utm/config.plist"
+        ]
+        for path in candidates {
+            if let text = try? String(contentsOfFile: path, encoding: .utf8),
+               let mib = UTMConfigParser.memorySizeMiB(configPlist: text) {
+                return Int64(mib) * 1_048_576
+            }
+        }
+        return nil
+    }
 
     private static func vmStatus(named name: String) -> VMStatus {
         probe.vmStatus(utmctlPath: utmctlPath, vmName: name)
