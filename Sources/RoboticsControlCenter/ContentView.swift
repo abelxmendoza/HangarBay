@@ -38,7 +38,7 @@ struct ContentView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
-                    if runtime.vmState == "Running" && runtime.vmStatusLabel == "Running" {
+                    if runtime.isRuntimeLive {
                         EvidenceChip(.live, label: "RUNTIME LIVE")
                     } else {
                         EvidenceChip(.unknown, label: "RUNTIME \(runtime.vmStatusLabel.uppercased())")

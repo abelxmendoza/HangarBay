@@ -6,8 +6,8 @@ struct DashboardView: View {
 
     /// Powered on, per UTM. Drives memory headroom and Start/Stop.
     private var runtimeRunning: Bool { runtime.vmState == "Running" }
-    /// Powered on and answering — the only state that earns a LIVE chip.
-    private var runtimeLive: Bool { runtimeRunning && runtime.vmStatusLabel == "Running" }
+    /// Powered on and answered the last probe — the only state that earns LIVE.
+    private var runtimeLive: Bool { runtime.isRuntimeLive }
 
     var body: some View {
         ScrollView {

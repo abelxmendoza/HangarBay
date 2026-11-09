@@ -42,6 +42,10 @@ final class RuntimeController: ObservableObject {
     @Published private(set) var runtimeHealth: RuntimeHealth = .notRunning
     @Published private(set) var isForceRestarting = false
 
+    /// LIVE only for a VM that is powered on *and* answered the last SSH
+    /// probe — never for one Darkstar could not check (honesty taxonomy).
+    var isRuntimeLive: Bool { vmState == "Running" && runtimeHealth == .responsive }
+
     /// Main-thread only: remembers how long a "running" VM has been silent.
     private var bootWatchdog = BootWatchdog()
 
