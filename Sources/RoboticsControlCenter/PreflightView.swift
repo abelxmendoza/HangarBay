@@ -26,13 +26,20 @@ struct PreflightView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Pre-flight checks")
                 .font(.largeTitle.bold())
-            Text("Everything a budding roboticist needs — verified before anything runs. Checks re-run automatically every few seconds.")
+            Text("Everything a budding roboticist needs — verified before anything runs. This Mac is re-checked every few seconds; the software inside the runtime once a minute while it's answering.")
                 .foregroundStyle(.secondary)
-            if let when = runtime.lastChecked {
-                Text("Last checked \(when.formatted(date: .omitted, time: .standard))")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+            HStack(spacing: 12) {
+                if let when = runtime.lastChecked {
+                    Text("Last checked \(when.formatted(date: .omitted, time: .standard))")
+                }
+                if let when = runtime.lastStackProbeDate {
+                    Text("Runtime probed \(when.formatted(date: .omitted, time: .standard))")
+                }
+                Button("Re-check now") { runtime.refresh(forceStackProbe: true) }
+                    .controlSize(.small)
             }
+            .font(.caption)
+            .foregroundStyle(.tertiary)
             EvidenceChip(.live, label: "LIVE PROBES")
                 .padding(.top, 2)
         }

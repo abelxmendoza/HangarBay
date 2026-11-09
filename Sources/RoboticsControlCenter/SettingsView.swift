@@ -22,7 +22,7 @@ struct SettingsView: View {
                     TextField("UTM virtual machine", text: $vmName)
                     TextField("SSH user", text: $sshUser)
                     TextField("SSH host (Tailscale address)", text: $sshHost)
-                    Button("Re-check everything") { runtime.refresh() }
+                    Button("Re-check everything") { runtime.refresh(forceStackProbe: true) }
                 }
                 Section("Updates") {
                     LabeledContent("Installed version", value: UpdateChecker.currentVersion)
