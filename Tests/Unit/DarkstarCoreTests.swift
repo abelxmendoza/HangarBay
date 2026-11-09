@@ -280,3 +280,68 @@ final class PreflightRulesTests: XCTestCase {
         XCTAssertEqual(PreflightRules.tailscaleStatus(.stopped(backendState: "NeedsLogin")), .fail)
     }
 }
+
+final class RuntimeResponsivenessTests: XCTestCase {
+    private let t0 = Date(timeIntervalSince1970: 1_000_000)
+    private let timeout = DarkstarError.commandFailed(executable: "/usr/bin/ssh", exitCode: 255,
+                                                      output: "ssh: connect to host 100.67.141.81 port 22: Operation timed out")
+
+    func testSSHClassifierTreatsSuccessAndAuthFailuresAsAnswering() {
+        XCTAssertEqual(SSHReachabilityClassifier.classify(exitCode: 0, output: ""), .answering)
+        // The guest is up; only the key setup is missing. Never a "hung VM".
+        XCTAssertEqual(SSHReachabilityClassifier.classify(exitCode: 255, output: "ryuk@100.67.141.81: Permission denied (publickey,password)."), .answering)
+        XCTAssertEqual(SSHReachabilityClassifier.classify(exitCode: 255, output: "Host key verification failed."), .answering)
+    }
+
+    func testSSHClassifierTreatsTimeoutsAndRefusalsAsNotAnswering() {
+        XCTAssertEqual(SSHReachabilityClassifier.classify(exitCode: 255, output: "ssh: connect to host 100.67.141.81 port 22: Operation timed out"),
+                       .notAnswering(timeout))
+        guard case .notAnswering = SSHReachabilityClassifier.classify(exitCode: 255, output: "Connection refused") else {
+            return XCTFail("Connection refused means sshd is not up yet")
+        }
+    }
+
+    func testWatchdogBootWindowThenUnresponsiveAtGraceBoundary() {
+        var watchdog = BootWatchdog()
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0), .booting(elapsedSeconds: 0))
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0.addingTimeInterval(119)), .booting(elapsedSeconds: 119))
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0.addingTimeInterval(120)),
+                       .unresponsive(elapsedSeconds: 120, lastError: timeout))
+    }
+
+    func testWatchdogResetsWhenGuestAnswersOrVMStops() {
+        var watchdog = BootWatchdog(graceSeconds: 60)
+        _ = watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0)
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .answering, now: t0.addingTimeInterval(30)), .responsive)
+        XCTAssertNil(watchdog.silentSince)
+        // A later silence starts a fresh window rather than inheriting the old one.
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0.addingTimeInterval(100)), .booting(elapsedSeconds: 0))
+        XCTAssertEqual(watchdog.update(vmStatus: .stopped, ssh: nil, now: t0.addingTimeInterval(200)), .notRunning)
+        XCTAssertNil(watchdog.silentSince)
+    }
+
+    func testWatchdogNeverJudgesWhenReachabilityWasNotChecked() {
+        var watchdog = BootWatchdog(graceSeconds: 60)
+        _ = watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0)
+        // Tailscale down on the Mac: unverified, and the silence clock resets.
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: nil, now: t0.addingTimeInterval(500)), .unverified)
+        XCTAssertEqual(watchdog.update(vmStatus: .running, ssh: .notAnswering(timeout), now: t0.addingTimeInterval(501)), .booting(elapsedSeconds: 0))
+    }
+
+    func testHealthCopyIsHonestAndOnlyHungOffersRecovery() {
+        let hung = RuntimeHealth.unresponsive(elapsedSeconds: 330, lastError: timeout)
+        XCTAssertEqual(hung.stateLabel, "Not responding")
+        XCTAssertTrue(hung.userMessage!.contains("5 min 30 s"))
+        XCTAssertTrue(hung.recoverySuggestion!.contains("Force restart"))
+        XCTAssertTrue(hung.isUnresponsive)
+
+        XCTAssertEqual(RuntimeHealth.booting(elapsedSeconds: 12).stateLabel, "Starting up")
+        XCTAssertNil(RuntimeHealth.booting(elapsedSeconds: 12).recoverySuggestion)
+        for calm in [RuntimeHealth.notRunning, .responsive, .unverified] {
+            XCTAssertNil(calm.stateLabel)
+            XCTAssertNil(calm.recoverySuggestion)
+            XCTAssertFalse(calm.isUnresponsive)
+        }
+        XCTAssertTrue(RuntimeHealth.unverified.userMessage!.contains("Tailscale"))
+    }
+}

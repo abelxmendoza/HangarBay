@@ -65,6 +65,22 @@ if (( free_gb < need_gb )); then
 fi
 ok "${free_gb} GB free on / (need ~${need_gb} GB)"
 
+step "Boot menu"
+# Ubuntu hides GRUB with a 0 s timeout, so when a new kernel hangs at
+# "EFI stub: Exiting boot services..." there is no way to pick the previous
+# one. A 3 s visible menu costs nothing and is the escape hatch. Drop-in
+# file, so package upgrades of /etc/default/grub never undo it.
+GRUB_DROPIN=/etc/default/grub.d/99-darkstar.cfg
+GRUB_WANT=$'# Darkstar runtime: always show the boot menu briefly (pick an older kernel after a bad update)\nGRUB_TIMEOUT_STYLE=menu\nGRUB_TIMEOUT=3\nGRUB_RECORDFAIL_TIMEOUT=3'
+if [[ "$(cat "$GRUB_DROPIN" 2>/dev/null)" != "$GRUB_WANT" ]]; then
+  sudo mkdir -p /etc/default/grub.d
+  printf '%s\n' "$GRUB_WANT" | sudo tee "$GRUB_DROPIN" >/dev/null
+  sudo update-grub >/dev/null
+  ok "Boot menu shows for 3 s (update-grub ran)"
+else
+  ok "Boot menu already shows for 3 s"
+fi
+
 step "Base packages"
 sudo apt-get update -qq
 sudo apt-get install -y -qq locales curl gnupg lsb-release software-properties-common \

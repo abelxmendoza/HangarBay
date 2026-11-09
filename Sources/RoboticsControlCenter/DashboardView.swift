@@ -56,8 +56,21 @@ struct DashboardView: View {
              chip: runtimeRunning ? EvidenceChip(.live) : EvidenceChip(.unknown, label: runtime.vmState.uppercased())) {
             LabeledContent("Virtual machine", value: runtime.vmName)
             LabeledContent("State", value: runtime.vmState)
+            if let message = runtime.runtimeHealth.userMessage {
+                Text(message)
+                    .font(.callout.weight(runtime.runtimeHealth.isUnresponsive ? .semibold : .regular))
+                    .foregroundStyle(runtime.runtimeHealth.isUnresponsive ? HB.alert : .secondary)
+                if let recovery = runtime.runtimeHealth.recoverySuggestion {
+                    Text(recovery).font(.callout).foregroundStyle(.secondary)
+                }
+            }
             HStack {
-                if runtimeRunning {
+                if runtime.runtimeHealth.isUnresponsive || runtime.isForceRestarting {
+                    Button(runtime.isForceRestarting ? "Restarting…" : "Force restart") { runtime.forceRestartVM() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(HB.signal)
+                        .disabled(runtime.isForceRestarting)
+                } else if runtimeRunning || runtime.vmState == "Starting up" {
                     Button("Stop") { runtime.stopVM() }
                 } else {
                     Button("Start") { runtime.startVM() }

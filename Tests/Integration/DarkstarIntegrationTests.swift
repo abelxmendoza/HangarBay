@@ -249,3 +249,92 @@ final class ViewerPolicyIntegrationTests: XCTestCase {
         XCTAssertNoThrow(try ViewerURLPolicy.validate("http://localhost:8000/demo/").get())
     }
 }
+
+final class RuntimeRecoveryIntegrationTests: XCTestCase {
+    private let utmctl = "/fake/UTM.app/Contents/MacOS/utmctl"
+    private let ssh = "/fake/ssh"
+    private let destination = try! SSHDestination.validate(user: "ryuk", host: "100.67.141.81").get()
+    private func list(_ state: String) -> Result<CommandOutput, DarkstarError> {
+        .success(CommandOutput(exitCode: 0, stdout: "UUID Status Name\nabc \(state) Omega-Ubuntu", stderr: ""))
+    }
+    private let sshArgs = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=accept-new", "ryuk@100.67.141.81", "true"]
+
+    func testSSHProbeIsNonInteractiveAndFeedsTheWatchdog() {
+        let runner = FakeCommandRunner()
+        runner.stub(executable: ssh, arguments: sshArgs, result: .success(CommandOutput(
+            exitCode: 255, stdout: "", stderr: "ssh: connect to host 100.67.141.81 port 22: Operation timed out")))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+
+        let reach = probe.sshReachability(destination: destination, sshPath: ssh)
+
+        XCTAssertEqual(runner.calls, [FakeCommandRunner.Call(executable: ssh, arguments: sshArgs)])
+        guard case .notAnswering = reach else { return XCTFail("Expected notAnswering, got \(reach)") }
+        var watchdog = BootWatchdog(graceSeconds: 120)
+        let start = Date()
+        _ = watchdog.update(vmStatus: .running, ssh: reach, now: start)
+        XCTAssertTrue(watchdog.update(vmStatus: .running, ssh: reach, now: start.addingTimeInterval(121)).isUnresponsive)
+    }
+
+    func testSSHProbeTimeoutIsNotAnswering() {
+        let runner = FakeCommandRunner()
+        runner.stub(executable: ssh, arguments: sshArgs, result: .failure(.commandTimedOut(executable: ssh, timeoutSeconds: 8)))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+        XCTAssertEqual(probe.sshReachability(destination: destination, sshPath: ssh),
+                       .notAnswering(.commandTimedOut(executable: ssh, timeoutSeconds: 8)))
+    }
+
+    func testForceRestartPowersOffWaitsThenStarts() {
+        let runner = FakeCommandRunner()
+        runner.stub(executable: utmctl, arguments: ["list"], result: list("stopped"))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+
+        let result = probe.forceRestartVM(utmctlPath: utmctl, vmName: "Omega-Ubuntu", sleep: { _ in })
+
+        guard case .success = result else { return XCTFail("Expected success, got \(result)") }
+        XCTAssertEqual(runner.calls.map(\.arguments), [["stop", "Omega-Ubuntu", "--force"], ["list"], ["start", "Omega-Ubuntu"]])
+    }
+
+    func testForceRestartStartsAVMThatWasAlreadyPoweredOff() {
+        let runner = FakeCommandRunner()
+        runner.stub(executable: utmctl, arguments: ["stop", "Omega-Ubuntu", "--force"], result: .success(CommandOutput(
+            exitCode: 1, stdout: "", stderr: "The virtual machine is not running.")))
+        runner.stub(executable: utmctl, arguments: ["list"], result: list("stopped"))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+
+        guard case .success = probe.forceRestartVM(utmctlPath: utmctl, vmName: "Omega-Ubuntu", sleep: { _ in }) else {
+            return XCTFail("An already-stopped VM should just be started")
+        }
+        XCTAssertEqual(runner.calls.last?.arguments, ["start", "Omega-Ubuntu"])
+    }
+
+    func testForceRestartReportsAVMThatNeverStopsAndDoesNotStartIt() {
+        let runner = FakeCommandRunner()
+        runner.stub(executable: utmctl, arguments: ["list"], result: list("started"))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+
+        let result = probe.forceRestartVM(utmctlPath: utmctl, vmName: "Omega-Ubuntu", stopWaitSeconds: 3, sleep: { _ in })
+
+        XCTAssertEqual(result.failureValue, .commandTimedOut(executable: utmctl, timeoutSeconds: 3))
+        XCTAssertFalse(runner.calls.contains { $0.arguments.first == "start" })
+    }
+
+    func testForceRestartSurfacesStopFailureForARunningVM() {
+        let runner = FakeCommandRunner()
+        let stopFailure = CommandOutput(exitCode: 1, stdout: "", stderr: "Error from event: OSStatus error -1743")
+        runner.stub(executable: utmctl, arguments: ["stop", "Omega-Ubuntu", "--force"], result: .success(stopFailure))
+        runner.stub(executable: utmctl, arguments: ["list"], result: list("started"))
+        let probe = RuntimeProbe(runner: runner, fileExists: { _ in true })
+
+        let error = probe.forceRestartVM(utmctlPath: utmctl, vmName: "Omega-Ubuntu", sleep: { _ in }).failureValue
+
+        XCTAssertEqual(error?.code, "command_failed")
+        XCTAssertTrue(error?.diagnosticMessage.contains("-1743") ?? false)
+    }
+}
+
+private extension Result {
+    var failureValue: Failure? {
+        if case .failure(let error) = self { return error }
+        return nil
+    }
+}

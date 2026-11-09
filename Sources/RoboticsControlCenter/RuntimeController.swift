@@ -33,6 +33,12 @@ final class RuntimeController: ObservableObject {
     @Published var vmReservationBytes: Int64? = nil
     @Published var quittableAppNames: Set<String> = []
     @Published private(set) var lastActionError: DarkstarError? = nil
+    /// UTM's state combined with whether the guest answers on SSH.
+    @Published private(set) var runtimeHealth: RuntimeHealth = .notRunning
+    @Published private(set) var isForceRestarting = false
+
+    /// Main-thread only: remembers how long a "running" VM has been silent.
+    private var bootWatchdog = BootWatchdog()
 
     private var timer: Timer?
 
@@ -65,12 +71,17 @@ final class RuntimeController: ObservableObject {
             guard let self else { return }
             let vm = Self.vmStatus(named: name)
             let tailscale = Self.tailscaleStatus()
+            // Only judge the guest when the link to it is up; otherwise a
+            // Tailscale outage would look like a hung VM.
+            let ssh: SSHReachability? = (vm.isRunning && tailscale == .connected) ? self.sshReachability() : nil
             let built = Self.buildChecks(vmName: name, vmStatus: vm, tailscaleStatus: tailscale)
             let mem = Self.memoryProbe.snapshot(totalBytes: Int64(ProcessInfo.processInfo.physicalMemory))
             let top = Self.memoryProbe.topProcesses(limit: 5)
             let reservation = Self.vmReservationBytes(named: name)
             DispatchQueue.main.async {
-                self.vmState = vm.legacyState
+                let health = self.bootWatchdog.update(vmStatus: vm, ssh: ssh, now: Date())
+                self.runtimeHealth = health
+                self.vmState = health.stateLabel ?? vm.legacyState
                 self.tailscaleState = tailscale.legacyState
                 self.checks = built
                 self.lastChecked = Date()
@@ -93,6 +104,34 @@ final class RuntimeController: ObservableObject {
     }
 
     func startVM() { runVMCommand("start") }
+
+    /// Power off + start for a VM that UTM calls running but that never
+    /// answered (see RuntimeHealth.unresponsive). Only ever user-initiated.
+    func forceRestartVM() {
+        guard !isForceRestarting else { return }
+        isForceRestarting = true
+        let name = vmName
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Self.probe.forceRestartVM(utmctlPath: Self.utmctlPath, vmName: name)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isForceRestarting = false
+                self.bootWatchdog = BootWatchdog()
+                switch result {
+                case .success: self.lastActionError = nil
+                case .failure(let error): self.lastActionError = error
+                }
+                self.refresh()
+            }
+        }
+    }
+
+    private func sshReachability() -> SSHReachability? {
+        guard case .success(let destination) = SSHDestination.validate(user: sshUser, host: sshHost) else {
+            return nil
+        }
+        return Self.probe.sshReachability(destination: destination)
+    }
     func stopVM() { runVMCommand("stop") }
 
     private func runVMCommand(_ verb: String) {

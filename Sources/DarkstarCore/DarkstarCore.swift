@@ -668,3 +668,178 @@ public enum PreflightRules {
         }
     }
 }
+
+// MARK: - Runtime responsiveness (boot-hang recovery)
+
+/// Whether the runtime's guest OS actually answers on SSH. UTM reporting a
+/// VM as "started" only means the QEMU process is alive: an arm64 Ubuntu
+/// guest can hang right after "EFI stub: Exiting boot services..." (seen
+/// on warm reboots under UTM on Apple silicon) with every vCPU spinning,
+/// while utmctl keeps saying "started".
+public enum SSHReachability: Equatable, Sendable {
+    /// The guest's sshd answered. An authentication failure still counts:
+    /// the OS is up, only the key setup is missing.
+    case answering
+    case notAnswering(DarkstarError)
+}
+
+public enum SSHReachabilityClassifier {
+    public static func classify(exitCode: Int32, output: String) -> SSHReachability {
+        if exitCode == 0 { return .answering }
+        let lowered = output.lowercased()
+        if lowered.contains("permission denied") || lowered.contains("too many authentication failures")
+            || lowered.contains("host key verification failed") {
+            return .answering
+        }
+        return .notAnswering(.commandFailed(executable: "/usr/bin/ssh", exitCode: exitCode, output: output))
+    }
+}
+
+/// The runtime as the user experiences it, combining UTM's view with
+/// whether the guest answers.
+public enum RuntimeHealth: Equatable, Sendable {
+    /// UTM does not report the VM as running; nothing to judge.
+    case notRunning
+    /// Running and the guest answers on SSH.
+    case responsive
+    /// Running, but the answer could not be checked (e.g. Tailscale is down
+    /// on this Mac), so Darkstar does not judge the guest — and never
+    /// offers a force restart on a guess.
+    case unverified
+    /// Running, not answering yet, still inside the normal boot window.
+    case booting(elapsedSeconds: Int)
+    /// Running but silent for longer than any normal boot.
+    case unresponsive(elapsedSeconds: Int, lastError: DarkstarError?)
+
+    public var isUnresponsive: Bool {
+        if case .unresponsive = self { return true }
+        return false
+    }
+
+    /// Replaces UTM's "Running" in the UI when the guest is not answering.
+    public var stateLabel: String? {
+        switch self {
+        case .notRunning, .responsive, .unverified: return nil
+        case .booting: return "Starting up"
+        case .unresponsive: return "Not responding"
+        }
+    }
+
+    public var userMessage: String? {
+        switch self {
+        case .notRunning, .responsive:
+            return nil
+        case .unverified:
+            return "Darkstar can't check whether the runtime answers until Tailscale is connected on this Mac."
+        case .booting(let seconds):
+            return "The runtime is booting (\(seconds)s). It usually answers within a minute."
+        case .unresponsive(let seconds, _):
+            return "UTM says the runtime is running, but it has not answered for \(seconds / 60) min \(seconds % 60) s. The Linux boot most likely hung."
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        guard isUnresponsive else { return nil }
+        return "Force restart powers the VM off and starts it again — the same as holding a laptop's power button. Ubuntu's journaling filesystem recovers from this. If it keeps hanging, open the Console and pick the previous kernel from the boot menu."
+    }
+}
+
+/// Decides when "started but silent" stops being a normal boot. Stateful
+/// across polls; feed it every probe result with the time it was taken.
+public struct BootWatchdog: Equatable, Sendable {
+    /// A healthy boot of the runtime answers SSH in ~15-30 s; two minutes
+    /// leaves room for fsck and first-boot work without leaving the user
+    /// staring at a frozen console.
+    public static let defaultGraceSeconds: TimeInterval = 120
+
+    public let graceSeconds: TimeInterval
+    public private(set) var silentSince: Date?
+
+    public init(graceSeconds: TimeInterval = BootWatchdog.defaultGraceSeconds) {
+        self.graceSeconds = graceSeconds
+    }
+
+    /// `ssh` is nil when reachability could not be checked this poll.
+    public mutating func update(vmStatus: VMStatus, ssh: SSHReachability?, now: Date) -> RuntimeHealth {
+        guard vmStatus.isRunning else {
+            silentSince = nil
+            return .notRunning
+        }
+        switch ssh {
+        case .answering:
+            silentSince = nil
+            return .responsive
+        case .notAnswering(let error):
+            return silent(now: now, lastError: error)
+        case nil:
+            // Not checked this poll: forget any silence so a later check
+            // starts a fresh boot window instead of jumping to "hung".
+            silentSince = nil
+            return .unverified
+        }
+    }
+
+    private mutating func silent(now: Date, lastError: DarkstarError?) -> RuntimeHealth {
+        let since = silentSince ?? now
+        silentSince = since
+        let elapsed = max(0, now.timeIntervalSince(since))
+        if elapsed >= graceSeconds {
+            return .unresponsive(elapsedSeconds: Int(elapsed), lastError: lastError)
+        }
+        return .booting(elapsedSeconds: Int(elapsed))
+    }
+}
+
+public extension RuntimeProbe {
+    /// One short, non-interactive SSH round trip to the runtime. Never
+    /// prompts (BatchMode) and never blocks a poll for long.
+    func sshReachability(destination: SSHDestination,
+                         sshPath: String = "/usr/bin/ssh",
+                         connectTimeoutSeconds: Int = 5) -> SSHReachability {
+        let arguments = ["-o", "BatchMode=yes",
+                         "-o", "ConnectTimeout=\(connectTimeoutSeconds)",
+                         "-o", "StrictHostKeyChecking=accept-new",
+                         destination.target, "true"]
+        do {
+            let output = try runner.run(executable: sshPath, arguments: arguments,
+                                        timeout: TimeInterval(connectTimeoutSeconds + 3))
+            return SSHReachabilityClassifier.classify(exitCode: output.exitCode, output: output.combinedOutput)
+        } catch let error as DarkstarError {
+            return .notAnswering(error)
+        } catch {
+            return .notAnswering(.unknown(error.localizedDescription))
+        }
+    }
+
+    /// Powers the VM off (utmctl's default forced stop), waits until UTM
+    /// reports it stopped, then starts it. Each step's failure is returned
+    /// as the exact DarkstarError, so the UI can say which step failed.
+    func forceRestartVM(utmctlPath: String, vmName: String,
+                        stopWaitSeconds: Int = 20,
+                        sleep: (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }) -> Result<Void, DarkstarError> {
+        do {
+            _ = try runner.runChecked(executable: utmctlPath, arguments: ["stop", vmName, "--force"], timeout: 30)
+        } catch let error as DarkstarError {
+            // Already stopped (e.g. the user powered it off in UTM): carry on and start it.
+            if vmStatus(utmctlPath: utmctlPath, vmName: vmName) != .stopped { return .failure(error) }
+        } catch {
+            return .failure(.unknown(error.localizedDescription))
+        }
+        var stopped = false
+        for _ in 0..<max(1, stopWaitSeconds) {
+            if vmStatus(utmctlPath: utmctlPath, vmName: vmName) == .stopped { stopped = true; break }
+            sleep(1)
+        }
+        guard stopped else {
+            return .failure(.commandTimedOut(executable: utmctlPath, timeoutSeconds: Double(stopWaitSeconds)))
+        }
+        do {
+            _ = try runner.runChecked(executable: utmctlPath, arguments: ["start", vmName], timeout: 30)
+            return .success(())
+        } catch let error as DarkstarError {
+            return .failure(error)
+        } catch {
+            return .failure(.unknown(error.localizedDescription))
+        }
+    }
+}

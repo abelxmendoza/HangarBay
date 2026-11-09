@@ -137,3 +137,64 @@ final class LocalReplayServerE2ETests: XCTestCase {
         XCTAssertTrue(body?.contains("Golden Demo") ?? false)
     }
 }
+
+final class RuntimeRecoveryE2ETests: XCTestCase {
+    private func makeExecutable(named name: String, in dir: URL, body: String) throws -> URL {
+        let file = dir.appendingPathComponent(name)
+        try body.write(to: file, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: file.path)
+        return file
+    }
+
+    private func makeDir() throws -> URL {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("darkstar-e2e-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    private let destination = try! SSHDestination.validate(user: "ryuk", host: "100.67.141.81").get()
+
+    func testRealProcessSSHAnswersAndAuthFailureBothCountAsUp() throws {
+        let dir = try makeDir()
+        let up = try makeExecutable(named: "ssh-up", in: dir, body: "#!/bin/sh\nexit 0\n")
+        let noKey = try makeExecutable(named: "ssh-nokey", in: dir, body: "#!/bin/sh\necho 'ryuk@100.67.141.81: Permission denied (publickey,password).' >&2\nexit 255\n")
+        let probe = RuntimeProbe(runner: ProcessCommandRunner())
+        XCTAssertEqual(probe.sshReachability(destination: destination, sshPath: up.path), .answering)
+        XCTAssertEqual(probe.sshReachability(destination: destination, sshPath: noKey.path), .answering)
+    }
+
+    func testRealProcessHungSSHIsKilledAndReportedNotAnswering() throws {
+        let dir = try makeDir()
+        let hung = try makeExecutable(named: "ssh-hung", in: dir, body: "#!/bin/sh\nsleep 30\n")
+        let probe = RuntimeProbe(runner: ProcessCommandRunner())
+        let started = Date()
+        let reach = probe.sshReachability(destination: destination, sshPath: hung.path, connectTimeoutSeconds: 1)
+        XCTAssertLessThan(Date().timeIntervalSince(started), 10, "the poll must not block on a hung ssh")
+        guard case .notAnswering(let error) = reach else { return XCTFail("Expected notAnswering, got \(reach)") }
+        XCTAssertEqual(error.code, "command_timed_out")
+    }
+
+    func testForceRestartAgainstStatefulFakeUTM() throws {
+        let dir = try makeDir()
+        let state = dir.appendingPathComponent("state")
+        try "started".write(to: state, atomically: true, encoding: .utf8)
+        let log = dir.appendingPathComponent("log")
+        let utmctl = try makeExecutable(named: "utmctl", in: dir, body: """
+        #!/bin/sh
+        echo "$*" >> "\(log.path)"
+        case "$1" in
+          list) echo "UUID Status Name"; echo "abc $(cat "\(state.path)") Omega-Ubuntu" ;;
+          stop) echo stopped > "\(state.path)" ;;
+          start) echo started > "\(state.path)" ;;
+        esac
+        """)
+        let probe = RuntimeProbe(runner: ProcessCommandRunner())
+
+        let result = probe.forceRestartVM(utmctlPath: utmctl.path, vmName: "Omega-Ubuntu", sleep: { _ in })
+
+        guard case .success = result else { return XCTFail("Expected success, got \(result)") }
+        XCTAssertEqual(probe.vmStatus(utmctlPath: utmctl.path, vmName: "Omega-Ubuntu"), .running)
+        let calls = try String(contentsOf: log, encoding: .utf8).split(separator: "\n").map(String.init)
+        XCTAssertEqual(Array(calls.prefix(3)), ["stop Omega-Ubuntu --force", "list", "start Omega-Ubuntu"])
+    }
+}
