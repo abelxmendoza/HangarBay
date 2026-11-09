@@ -20,6 +20,15 @@ public struct CLIConfig: Equatable, Sendable {
     public var extraSSHArguments: [String]
     public var connectTimeoutSeconds: Int
 
+    public init(user: String, host: String, identityFile: String? = nil,
+                extraSSHArguments: [String] = [], connectTimeoutSeconds: Int = CLIConfig.defaultTimeoutSeconds) {
+        self.user = user
+        self.host = host
+        self.identityFile = identityFile
+        self.extraSSHArguments = extraSSHArguments
+        self.connectTimeoutSeconds = connectTimeoutSeconds
+    }
+
     public static let defaultUser = "ryuk"
     public static let defaultHost = "100.67.141.81"
     public static let defaultTimeoutSeconds = 10
@@ -212,6 +221,24 @@ public struct RemoteReport: Equatable, Sendable {
         return raw.split(separator: ",").map(String.init).filter { !$0.isEmpty }
     }
 
+    /// ros2 executables found under /opt/ros/*/bin (independent of PATH,
+    /// which a non-interactive SSH shell does not get from .bashrc).
+    public var ros2Binaries: [String] {
+        guard let raw = values["ROS2BIN"], !raw.isEmpty else { return [] }
+        return raw.split(separator: ",").map(String.init).filter { !$0.isEmpty }
+    }
+
+    /// nil when the probe predates this field (older remote script).
+    public var px4SITLBuilt: Bool? {
+        guard let raw = values["PX4SITL"] else { return nil }
+        return raw == "built"
+    }
+
+    public var xrceAgentPath: String? {
+        guard let raw = values["XRCE"], raw != "absent", !raw.isEmpty else { return nil }
+        return raw
+    }
+
     public static func gibString(kb: Int) -> String {
         let gib = Double(kb) / 1_048_576.0
         return String(format: "%.1f", gib)
@@ -244,7 +271,7 @@ public struct LinkProbe {
     /// The one-line remote script. The remote side stays dumb on
     /// purpose: it prints raw facts, and all interpretation (including
     /// the df column math) happens here, where it is unit-tested.
-    public static let remoteProbeCommand = "echo \"HOSTNAME=$(hostname)\"; echo \"OS=$(. /etc/os-release 2>/dev/null; echo ${PRETTY_NAME:-unknown})\"; echo \"ARCH=$(uname -m)\"; echo \"KERNEL=$(uname -r)\"; echo \"UPTIME=$(uptime -p 2>/dev/null)\"; echo \"DF=$(df -P / | tail -n 1)\"; echo \"ROS=$(ls /opt/ros 2>/dev/null | paste -sd, -)\"; echo \"GZ=$(gz sim --version 2>/dev/null | head -n 1)\"; echo \"DOCKER=$(command -v docker || echo absent)\"; echo \"ROS2CLI=$(command -v ros2 || echo absent)\"; echo \"PX4=$(ls -d ~/PX4-Autopilot ~/PX4-Autonomous-Missions 2>/dev/null | paste -sd, -)\""
+    public static let remoteProbeCommand = "echo \"HOSTNAME=$(hostname)\"; echo \"OS=$(. /etc/os-release 2>/dev/null; echo ${PRETTY_NAME:-unknown})\"; echo \"ARCH=$(uname -m)\"; echo \"KERNEL=$(uname -r)\"; echo \"UPTIME=$(uptime -p 2>/dev/null)\"; echo \"DF=$(df -P / | tail -n 1)\"; echo \"ROS=$(ls /opt/ros 2>/dev/null | paste -sd, -)\"; echo \"GZ=$(gz sim --version 2>/dev/null | head -n 1)\"; echo \"DOCKER=$(command -v docker || echo absent)\"; echo \"ROS2CLI=$(command -v ros2 || echo absent)\"; echo \"PX4=$(ls -d ~/PX4-Autopilot ~/PX4-Autonomous-Missions 2>/dev/null | paste -sd, -)\"; echo \"ROS2BIN=$(ls /opt/ros/*/bin/ros2 2>/dev/null | paste -sd, -)\"; echo \"PX4SITL=$(test -x ~/PX4-Autopilot/build/px4_sitl_default/bin/px4 && echo built || echo absent)\"; echo \"XRCE=$(ls /usr/local/bin/MicroXRCEAgent 2>/dev/null || command -v MicroXRCEAgent || echo absent)\""
 
     public static func sshArguments(config: CLIConfig, destination: SSHDestination, remoteCommand: String) -> [String] {
         var arguments = [
@@ -277,5 +304,166 @@ public struct LinkProbe {
             timeout: timeout
         )
         return RemoteReport.parse(output.stdout)
+    }
+}
+
+// MARK: - Runtime stack preflight (used by the app)
+
+/// One Preflight row about the software inside the runtime VM.
+public struct RuntimeStackCheck: Equatable, Sendable {
+    public enum Item: String, CaseIterable, Sendable {
+        case ssh, disk, ros2, gazebo, px4, xrce
+    }
+
+    public let item: Item
+    public let detail: String
+    public let status: PreflightRuleStatus
+
+    public var title: String {
+        switch item {
+        case .ssh: return "Runtime SSH"
+        case .disk: return "Runtime disk"
+        case .ros2: return "ROS 2 Jazzy (in runtime)"
+        case .gazebo: return "Gazebo Harmonic (in runtime)"
+        case .px4: return "PX4 SITL (in runtime)"
+        case .xrce: return "Micro XRCE-DDS Agent (in runtime)"
+        }
+    }
+}
+
+/// The outcome of the last deep probe of the runtime.
+public enum RuntimeStackProbeResult: Equatable, Sendable {
+    case report(RemoteReport, at: Date)
+    case failed(DarkstarError, at: Date)
+}
+
+/// Turns the runtime's health and the last deep probe into Preflight rows.
+/// Honesty rules (docs/TESTING.md): a report is only trusted while the
+/// runtime is answering; anything not probed is UNKNOWN with the reason,
+/// never a pass from memory and never a guess.
+public enum RuntimeStackAssessment {
+    public static let fixHint = "run bash dev.sh runtime"
+
+    public static func checks(health: RuntimeHealth, result: RuntimeStackProbeResult?) -> [RuntimeStackCheck] {
+        switch health {
+        case .notRunning:
+            return unknownAll("The runtime is stopped — start it to check.")
+        case .booting:
+            return unknownAll("Waiting for the runtime to finish booting.")
+        case .unverified:
+            return unknownAll("Can't check until Tailscale is connected on this Mac.")
+        case .unresponsive:
+            var rows = unknownAll("The runtime isn't answering, so this can't be checked.")
+            rows[0] = RuntimeStackCheck(item: .ssh,
+                                        detail: health.userMessage ?? "The runtime isn't answering.",
+                                        status: .fail)
+            return rows
+        case .responsive:
+            switch result {
+            case nil:
+                return unknownAll("Checking the runtime…")
+            case .failed(let error, _):
+                var rows = unknownAll("Could not read the runtime — see Runtime SSH.")
+                rows[0] = RuntimeStackCheck(item: .ssh, detail: error.displayMessage, status: .fail)
+                return rows
+            case .report(let report, _):
+                return assess(report)
+            }
+        }
+    }
+
+    public static func assess(_ report: RemoteReport) -> [RuntimeStackCheck] {
+        [ssh(report), disk(report), ros2(report), gazebo(report), px4(report), xrce(report)]
+    }
+
+    private static func unknownAll(_ detail: String) -> [RuntimeStackCheck] {
+        RuntimeStackCheck.Item.allCases.map { RuntimeStackCheck(item: $0, detail: detail, status: .unknown) }
+    }
+
+    static func ssh(_ r: RemoteReport) -> RuntimeStackCheck {
+        let parts = [r.hostname, r.osName, r.kernel.map { "kernel \($0)" }, r.uptime].compactMap { $0 }
+        return RuntimeStackCheck(item: .ssh,
+                                 detail: parts.isEmpty ? "Answered" : "Answered · " + parts.joined(separator: " · "),
+                                 status: .pass)
+    }
+
+    static func disk(_ r: RemoteReport) -> RuntimeStackCheck {
+        guard let free = r.diskFreeKB, let total = r.diskTotalKB else {
+            return RuntimeStackCheck(item: .disk, detail: "The runtime did not report its disk.", status: .unknown)
+        }
+        let line = "\(RemoteReport.gibString(kb: free)) GB free of \(RemoteReport.gibString(kb: total)) GB"
+        let status = PreflightRules.runtimeVMDiskStatus(freeGB: r.diskFreeGB)
+        let suffix: String
+        switch status {
+        case .pass, .unknown: suffix = ""
+        case .warn: suffix = " — tight for rebuilds and ros2 bags (want \(Int(PreflightRules.runtimeVMDiskPassGB)) GB+)"
+        case .fail: suffix = " — too low; provisioning needs ~\(Int(PreflightRules.runtimeVMDiskPassGB)) GB (bash dev.sh doctor shows the fix)"
+        }
+        return RuntimeStackCheck(item: .disk, detail: line + suffix, status: status)
+    }
+
+    static func ros2(_ r: RemoteReport) -> RuntimeStackCheck {
+        let hasJazzy = r.rosDistros.contains("jazzy")
+        let jazzyBinary = r.ros2Binaries.contains { $0.hasPrefix("/opt/ros/jazzy/") }
+        if hasJazzy && jazzyBinary {
+            return RuntimeStackCheck(item: .ros2, detail: "Installed · /opt/ros/jazzy", status: .pass)
+        }
+        if hasJazzy {
+            return RuntimeStackCheck(item: .ros2, detail: "/opt/ros/jazzy exists but has no ros2 command — incomplete install; \(fixHint)", status: .warn)
+        }
+        if !r.rosDistros.isEmpty {
+            return RuntimeStackCheck(item: .ros2, detail: "Found \(r.rosDistros.joined(separator: ", ")); Darkstar's validated pairing is Jazzy — \(fixHint)", status: .warn)
+        }
+        return RuntimeStackCheck(item: .ros2, detail: "Not installed — \(fixHint)", status: .fail)
+    }
+
+    static func gazebo(_ r: RemoteReport) -> RuntimeStackCheck {
+        guard let version = r.gazeboVersion else {
+            return RuntimeStackCheck(item: .gazebo, detail: "Not installed — \(fixHint)", status: .fail)
+        }
+        // Gazebo Harmonic is gz-sim 8.x.
+        if version.range(of: #"version 8\."#, options: .regularExpression) != nil {
+            return RuntimeStackCheck(item: .gazebo, detail: version, status: .pass)
+        }
+        return RuntimeStackCheck(item: .gazebo, detail: "\(version) — the validated pairing is Harmonic (gz-sim 8)", status: .warn)
+    }
+
+    static func px4(_ r: RemoteReport) -> RuntimeStackCheck {
+        switch r.px4SITLBuilt {
+        case true?:
+            return RuntimeStackCheck(item: .px4, detail: "Built · ~/PX4-Autopilot/build/px4_sitl_default", status: .pass)
+        case false?:
+            if r.px4Paths.contains(where: { $0.hasSuffix("/PX4-Autopilot") }) {
+                return RuntimeStackCheck(item: .px4, detail: "Source is there but SITL isn't built — \(fixHint)", status: .warn)
+            }
+            return RuntimeStackCheck(item: .px4, detail: "Not installed — \(fixHint)", status: .fail)
+        case nil:
+            return RuntimeStackCheck(item: .px4, detail: "The runtime did not report PX4's build state.", status: .unknown)
+        }
+    }
+
+    static func xrce(_ r: RemoteReport) -> RuntimeStackCheck {
+        guard r.values["XRCE"] != nil else {
+            return RuntimeStackCheck(item: .xrce, detail: "The runtime did not report the agent.", status: .unknown)
+        }
+        if let path = r.xrceAgentPath {
+            return RuntimeStackCheck(item: .xrce, detail: "Installed · \(path) (PX4 ↔ ROS 2 bridge, UDP 8888)", status: .pass)
+        }
+        return RuntimeStackCheck(item: .xrce, detail: "Not installed — \(fixHint)", status: .fail)
+    }
+}
+
+/// When to run the (heavier) deep probe. The cheap SSH reachability
+/// check runs every poll; the stack probe runs once a minute, on demand,
+/// and immediately once a freshly booted runtime starts answering.
+public enum RuntimeStackProbeSchedule {
+    public static let intervalSeconds: TimeInterval = 60
+
+    public static func shouldProbe(health: RuntimeHealth, lastProbeAt: Date?, now: Date,
+                                   force: Bool, inFlight: Bool,
+                                   interval: TimeInterval = intervalSeconds) -> Bool {
+        guard health == .responsive, !inFlight else { return false }
+        guard !force, let last = lastProbeAt else { return true }
+        return now.timeIntervalSince(last) >= interval
     }
 }

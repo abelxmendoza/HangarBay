@@ -27,7 +27,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "RoboticsControlCenter",
-            dependencies: ["DarkstarCore"],
+            dependencies: ["DarkstarCore", "DarkstarLink"],
             resources: [.process("hangar-bay-logo.png")]
         ),
         .testTarget(

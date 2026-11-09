@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import DarkstarCore
+import DarkstarLink
 
 enum CheckStatus {
     case pass, warn, fail, unknown
@@ -49,6 +50,14 @@ final class RuntimeController: ObservableObject {
     /// Main-thread only: remembers how long a "running" VM has been silent.
     private var bootWatchdog = BootWatchdog()
 
+    /// Main-thread only: Mac/UTM/Tailscale rows from the 8 s poll, and the
+    /// last deep probe of the software inside the runtime (once a minute).
+    private var hostChecks: [PreflightCheck] = []
+    private var stackResult: RuntimeStackProbeResult?
+    private var lastStackProbeAt: Date?
+    private var stackProbeInFlight = false
+    @Published private(set) var lastStackProbeDate: Date? = nil
+
     private var timer: Timer?
 
     static let utmAppPath = "/Applications/UTM.app"
@@ -74,7 +83,9 @@ final class RuntimeController: ObservableObject {
 
     // MARK: - Polling
 
-    func refresh() {
+    /// `forceStackProbe` re-reads the runtime's software now instead of
+    /// waiting for the once-a-minute deep probe (Re-check buttons).
+    func refresh(forceStackProbe: Bool = false) {
         let name = vmName
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self else { return }
@@ -93,12 +104,52 @@ final class RuntimeController: ObservableObject {
                 self.vmState = vm.legacyState
                 self.vmStatusLabel = health.stateLabel ?? vm.legacyState
                 self.tailscaleState = tailscale.legacyState
-                self.checks = built
+                self.hostChecks = built
+                if health != .responsive {
+                    // Re-probe as soon as the runtime answers again; a report
+                    // from before a restart must not stand in for now.
+                    self.lastStackProbeAt = nil
+                }
+                self.publishChecks()
+                self.probeStackIfDue(force: forceStackProbe)
                 self.lastChecked = Date()
                 self.memory = mem
                 self.topProcesses = top
                 self.vmReservationBytes = reservation
                 self.quittableAppNames = Set(NSWorkspace.shared.runningApplications.compactMap { $0.localizedName })
+            }
+        }
+    }
+
+    private func publishChecks() {
+        let stack = RuntimeStackAssessment.checks(health: runtimeHealth, result: stackResult).map {
+            PreflightCheck(title: $0.title, detail: $0.detail, status: Self.map($0.status))
+        }
+        checks = hostChecks + stack
+    }
+
+    private func probeStackIfDue(force: Bool) {
+        let now = Date()
+        guard RuntimeStackProbeSchedule.shouldProbe(health: runtimeHealth, lastProbeAt: lastStackProbeAt,
+                                                    now: now, force: force, inFlight: stackProbeInFlight) else { return }
+        stackProbeInFlight = true
+        lastStackProbeAt = now
+        let config = CLIConfig(user: sshUser, host: sshHost, connectTimeoutSeconds: 5)
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let result: RuntimeStackProbeResult
+            do {
+                result = .report(try Self.linkProbe.probeVM(config: config, timeout: 20), at: Date())
+            } catch let error as DarkstarError {
+                result = .failed(error, at: Date())
+            } catch {
+                result = .failed(.unknown(error.localizedDescription), at: Date())
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.stackProbeInFlight = false
+                self.stackResult = result
+                self.lastStackProbeDate = Date()
+                self.publishChecks()
             }
         }
     }
@@ -221,6 +272,7 @@ final class RuntimeController: ObservableObject {
     // MARK: - Probes
 
     private static let probe = RuntimeProbe(runner: ProcessCommandRunner())
+    private static let linkProbe = LinkProbe(runner: ProcessCommandRunner())
     private static let memoryProbe = MemoryProbe(runner: ProcessCommandRunner())
 
     /// The runtime's configured memory reservation, read from its UTM
@@ -319,26 +371,8 @@ final class RuntimeController: ObservableObject {
             detail: tailscaleStatus.detail,
             status: map(PreflightRules.tailscaleStatus(tailscaleStatus))))
 
-        result.append(PreflightCheck(
-            title: "Runtime SSH",
-            detail: "Verified out-of-band 2026-10-23 · in-app probe arrives with the runtime bridge",
-            status: .unknown))
-
-        result.append(PreflightCheck(
-            title: "ROS 2 Jazzy (in runtime)",
-            detail: "Installed and verified 2026-10-23 · 194 packages",
-            status: .unknown))
-
-        result.append(PreflightCheck(
-            title: "Gazebo Harmonic (in runtime)",
-            detail: "Gazebo Sim 8.15.0 · headless smoke test passed 2026-10-23",
-            status: .unknown))
-
-        result.append(PreflightCheck(
-            title: "PX4 SITL",
-            detail: "Source clone and build in progress on the runtime",
-            status: .warn))
-
+        // Runtime SSH, disk, ROS 2, Gazebo, PX4 and the XRCE agent come from
+        // the live deep probe — see publishChecks / RuntimeStackAssessment.
         return result
     }
 }
