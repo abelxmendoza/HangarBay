@@ -261,6 +261,17 @@ final class PreflightRulesTests: XCTestCase {
         XCTAssertEqual(PreflightRules.diskStatus(freeGB: 39.9), .fail)
     }
 
+    func testRuntimeVMDiskThresholdBoundaries() {
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: nil), .unknown)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: -1), .unknown)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: 34), .pass)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: 25), .pass)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: 24.9), .warn)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: 15), .warn)
+        // The real case that motivated this rule: default Ubuntu LVM, 4.6 GB left.
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: 4.6), .fail)
+    }
+
     func testVMAndTailscaleMappings() {
         XCTAssertEqual(PreflightRules.vmStatus(.running), .pass)
         XCTAssertEqual(PreflightRules.vmStatus(.stopped), .warn)

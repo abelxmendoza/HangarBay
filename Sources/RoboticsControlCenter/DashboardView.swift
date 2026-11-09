@@ -1,4 +1,5 @@
 import SwiftUI
+import DarkstarCore
 
 struct DashboardView: View {
     @EnvironmentObject private var runtime: RuntimeController
@@ -15,6 +16,7 @@ struct DashboardView: View {
                     px4Card
                     linkCard
                 }
+                resourcesCard
                 Text("The runtime does the heavy lifting underneath — ROS 2, Gazebo and PX4 live there, so this Mac stays a clean place to think, design and review.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: 640, alignment: .leading)
@@ -112,6 +114,113 @@ struct DashboardView: View {
             Text("Your Mac and the runtime find each other anywhere — no port forwarding, no router spelunking.")
                 .font(.callout).foregroundStyle(.secondary)
         }
+    }
+
+    // MARK: - Resources (split-architecture design §9: know / show / manage)
+
+    private var headroomVerdict: HeadroomVerdict {
+        guard let memory = runtime.memory else { return .unknown }
+        return ResourceRules.runtimeHeadroom(
+            pressure: memory.pressure,
+            availableBytes: memory.availableBytes,
+            reservationBytes: runtime.vmReservationBytes,
+            vmRunning: runtimeRunning)
+    }
+
+    private var verdictColor: Color {
+        switch headroomVerdict {
+        case .fits: return HB.telemetry
+        case .tight: return HB.warning
+        case .wontFit: return HB.alert
+        case .unknown: return HB.steel
+        }
+    }
+
+    private var verdictSentence: String {
+        let top = runtime.topProcesses.first
+        switch headroomVerdict {
+        case .fits:
+            return runtimeRunning
+                ? "Fits — the runtime is resident and this Mac still has headroom."
+                : "Fits — there is room to start the Linux runtime."
+        case .tight:
+            if let top {
+                return "Tight — \(top.name) is using \(Self.fmt(top.bytes)). Quitting heavy apps frees real headroom."
+            }
+            return "Tight — memory pressure is elevated."
+        case .wontFit:
+            if let top {
+                return "Won't fit yet — the runtime needs more free memory than this Mac has right now. Biggest consumer: \(top.name) at \(Self.fmt(top.bytes))."
+            }
+            return "Won't fit yet — the runtime needs more free memory than this Mac has right now."
+        case .unknown:
+            return "Not measured yet — the first probe lands a few seconds after launch."
+        }
+    }
+
+    private var resourcesCard: some View {
+        Card(title: "Workstation Resources", icon: "memorychip",
+             chip: runtime.memory != nil ? EvidenceChip(.live) : EvidenceChip(.unknown)) {
+            if let memory = runtime.memory {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4).fill(HB.gunmetal)
+                        RoundedRectangle(cornerRadius: 4).fill(HB.cyan)
+                            .frame(width: max(2, geo.size.width * memory.usedFraction))
+                    }
+                }
+                .frame(height: 10)
+                .accessibilityLabel("Memory used \(Self.fmt(memory.usedBytes)) of \(Self.fmt(memory.totalBytes))")
+
+                LabeledContent("Memory used", value: "\(Self.fmt(memory.usedBytes)) of \(Self.fmt(memory.totalBytes))")
+                LabeledContent("Available", value: Self.fmt(memory.availableBytes))
+                LabeledContent("Pressure", value: memory.compressedBytes > 0
+                    ? "\(memory.pressure.label) · \(Self.fmt(memory.compressedBytes)) compressed"
+                    : memory.pressure.label)
+                if let reservation = runtime.vmReservationBytes {
+                    LabeledContent("Linux runtime", value: runtimeRunning
+                        ? "Running · reserving \(Self.fmt(reservation))"
+                        : "Stopped · needs \(Self.fmt(reservation)) to start")
+                }
+                Text(verdictSentence)
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(verdictColor)
+                    .padding(.top, 2)
+
+                if !runtime.topProcesses.isEmpty {
+                    Divider().overlay(HB.hairline)
+                    Text("TOP MEMORY USERS")
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .tracking(1.6)
+                        .foregroundStyle(HB.steel)
+                    ForEach(runtime.topProcesses) { process in
+                        HStack {
+                            Text(process.name)
+                            Spacer()
+                            Text(Self.fmt(process.bytes))
+                                .foregroundStyle(.secondary)
+                                .font(.callout.monospacedDigit())
+                            if runtime.quittableAppNames.contains(process.name),
+                               process.name != "Darkstar Robotics",
+                               process.name != "RoboticsControlCenter" {
+                                Button("Quit") { runtime.quitApp(named: process.name) }
+                                    .controlSize(.small)
+                            }
+                        }
+                        .font(.callout)
+                    }
+                    Text("Darkstar never quits your apps on its own — it names the heavy ones and lets you decide.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            } else {
+                Text("Measuring this Mac's memory…")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private static func fmt(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .memory)
     }
 }
 

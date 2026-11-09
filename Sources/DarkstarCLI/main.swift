@@ -31,7 +31,15 @@ func printVM(report: RemoteReport) {
     print("\(padded("Kernel"))\(report.kernel ?? "UNKNOWN")")
     print("\(padded("Uptime"))\(report.uptime ?? "UNKNOWN")")
     if let free = report.diskFreeKB, let total = report.diskTotalKB {
-        print("\(padded("Disk (root)"))\(RemoteReport.gibString(kb: free)) GB free of \(RemoteReport.gibString(kb: total)) GB")
+        let line = "\(RemoteReport.gibString(kb: free)) GB free of \(RemoteReport.gibString(kb: total)) GB"
+        switch PreflightRules.runtimeVMDiskStatus(freeGB: report.diskFreeGB) {
+        case .pass, .unknown:
+            print("\(padded("Disk (root)"))\(line)")
+        case .warn:
+            print("\(padded("Disk (root)"))\(line) — LOW (rebuilds and ros2 bags need \(Int(PreflightRules.runtimeVMDiskPassGB)) GB+)")
+        case .fail:
+            print("\(padded("Disk (root)"))\(line) — TOO LOW (provisioning needs ~\(Int(PreflightRules.runtimeVMDiskPassGB)) GB)")
+        }
     } else {
         print("\(padded("Disk (root)"))UNKNOWN")
     }

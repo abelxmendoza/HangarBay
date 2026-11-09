@@ -39,6 +39,9 @@ final class DarkstarLinkTests: XCTestCase {
         XCTAssertEqual(report.diskTotalKB, 30_859_776)
         XCTAssertEqual(report.diskFreeKB, 8_710_272)
         XCTAssertEqual(RemoteReport.gibString(kb: 8_710_272), "8.3")
+        XCTAssertEqual(report.diskFreeGB!, 8.307, accuracy: 0.01)
+        // 8.3 GB free is below what a full runtime install needs.
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: report.diskFreeGB), .fail)
     }
 
     func testMissingFactsStayAbsent() {
@@ -46,6 +49,8 @@ final class DarkstarLinkTests: XCTestCase {
         XCTAssertEqual(report.hostname, "only")
         XCTAssertNil(report.osName)
         XCTAssertNil(report.diskFreeKB)
+        XCTAssertNil(report.diskFreeGB)
+        XCTAssertEqual(PreflightRules.runtimeVMDiskStatus(freeGB: report.diskFreeGB), .unknown)
         XCTAssertEqual(report.rosDistros, [])
         XCTAssertEqual(report.px4Paths, [])
         XCTAssertFalse(report.ros2CLIPresent)

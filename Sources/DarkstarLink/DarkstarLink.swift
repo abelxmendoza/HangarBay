@@ -183,6 +183,7 @@ public struct RemoteReport: Equatable, Sendable {
     /// Filesystem, 1K-blocks, Used, Available, Capacity, Mounted-on.
     public var diskTotalKB: Int? { diskField(index: 1) }
     public var diskFreeKB: Int? { diskField(index: 3) }
+    public var diskFreeGB: Double? { diskFreeKB.map { Double($0) / 1_048_576.0 } }
 
     private func diskField(index: Int) -> Int? {
         guard let df = values["DF"] else { return nil }
