@@ -3,9 +3,13 @@
 ## First time (one command)
 
 ```
-cd ~/Desktop/projects/RoboticsControlCenter
+git clone https://github.com/abelxmendoza/HangarBay.git ~/Desktop/projects/HangarBay
+cd ~/Desktop/projects/HangarBay
 bash dev.sh setup
 ```
+
+Any folder works; the scripts find everything relative to the checkout.
+Release builds go to a sibling `DarkstarRobotics-Dist/` folder.
 
 or double-click **Darkstar Setup.command** in Finder.
 
@@ -26,7 +30,7 @@ to also provision the Ubuntu VM.
 | `bash dev.sh cli vm` | Deep probe of the VM with the `darkstar` CLI |
 
 The version lives in `VERSION`. When you bump it, also bump `newVersion` in
-`DarkstarInstaller/Sources/DarkstarInstaller/DarkstarInstallerApp.swift`;
+`Installer/Sources/DarkstarInstaller/DarkstarInstallerApp.swift`;
 `bash dev.sh dist` refuses to build an installer whose version doesn't match.
 
 Conda: your shell starts in conda `base`. Every script resets PATH to Apple's

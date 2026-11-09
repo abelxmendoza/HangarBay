@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds Darkstar Robotics.app (+ the installer app and zips) into
-# ../DarkstarRobotics-Dist. Same steps as ~/Desktop/projects/package-0.4.0.sh,
-# but the version comes from ./VERSION and paths from this checkout.
+# ../DarkstarRobotics-Dist. The version comes from ./VERSION; the installer
+# is built from ./Installer with the fresh app staged as its Payload.
 #   APP_ONLY=1  skip the installer + zips (what `dev.sh install` uses)
 set -euo pipefail
 source "$(dirname "$0")/_env.sh"
@@ -70,12 +70,12 @@ assemble "$(swift build -c release --show-bin-path)" RoboticsControlCenter "$APP
 
 c_step "Building installer"
 if ! grep -q "newVersion = \"$VERSION\"" "$DARKSTAR_INSTALLER_SRC/Sources/DarkstarInstaller/DarkstarInstallerApp.swift"; then
-  c_fail "DarkstarInstallerApp.swift newVersion does not match VERSION ($VERSION). Update it first."; exit 1
+  c_fail "Installer/Sources/DarkstarInstaller/DarkstarInstallerApp.swift newVersion does not match VERSION ($VERSION). Update it first."; exit 1
 fi
 PAYLOAD_DIR="$DARKSTAR_INSTALLER_SRC/Sources/DarkstarInstaller/Payload"
 mkdir -p "$PAYLOAD_DIR"
 rm -rf "${PAYLOAD_DIR:?}/${DARKSTAR_APP_NAME:?}.app"
-cp -R "$APP_BUNDLE" "$PAYLOAD_DIR/$DARKSTAR_APP_NAME.app"
+ditto "$APP_BUNDLE" "$PAYLOAD_DIR/$DARKSTAR_APP_NAME.app"   # gitignored; see Payload/README.md
 cd "$DARKSTAR_INSTALLER_SRC"
 swift build -c release --product DarkstarInstaller
 INST_BUNDLE="$DARKSTAR_DIST/$INST_NAME.app"
